@@ -8,8 +8,44 @@ enum ShaderTypes {
 
 type ShaderSource = {
 	source: string,
-	type: ShaderTypes,
+	type: ShaderTypes
+}
+
+type ShaderProgramSource = {
+	sources: Array<ShaderSource>
 	uniforms: Array<string>
+}
+
+type ShaderAttribute = {
+	name: string,
+	location: number
+}
+
+enum ShaderAttributeKinds {
+	position = 'position',
+	uv = 'uv',
+	normal = 'normal'
+}
+
+class ShaderAttributes {
+	position: ShaderAttribute
+	uv: ShaderAttribute
+	normal: ShaderAttribute
+
+	constructor() {
+		this.position = {
+			name: 'in_position',
+			location: null
+		}
+		this.uv = {
+			name: 'in_uv',
+			location: null
+		}
+		this.normal = {
+			name: 'in_normal',
+			location: null
+		}
+	}
 }
 
 class Shader extends Resource {
@@ -21,11 +57,11 @@ class Shader extends Resource {
 
 	public isValid: boolean
 
-	constructor(gl: WebGLRenderingContext, src: string, type: number) {
+	constructor(gl: WebGLRenderingContext, src: ShaderSource) {
 		super()
 		this.gl = gl
-		this.source = src
-		this.type = type
+		this.source = src.source
+		this.type = Shader.getShaderType(gl, src.type)
 		this.isValid = true
 		this.setup()
 	}
@@ -49,6 +85,14 @@ class Shader extends Resource {
 	  	}
 	  	this.shader = shader
 	}
+
+	private static getShaderType(gl: WebGLRenderingContext, type: ShaderTypes): number {
+		if (type == ShaderTypes.FRAGMENT)
+			return gl.FRAGMENT_SHADER
+		if (type == ShaderTypes.VERTEX)
+			return gl.VERTEX_SHADER
+		throw new Error('Unrecognized shader type.')
+	}
 }
 
 //
@@ -60,11 +104,14 @@ class ShaderProgram extends Resource {
 	private gl: WebGLRenderingContext
 	private shaders: Array<Shader>
 	private program?: WebGLProgram
+	private attributes: ShaderAttributes
+
 	public isValid: boolean = true
 	public isFinalized: boolean = false
 
 	constructor(gl: WebGLRenderingContext) {
 		super()
+		this.attributes = new ShaderAttributes()
 		this.gl = gl
 	}
 
@@ -76,6 +123,7 @@ class ShaderProgram extends Resource {
 		}
 		this.shaders = shaders
 		this.finalize()
+		this.getAttributeLocations()
 	}
 
 	public bind(): void {
@@ -122,6 +170,24 @@ class ShaderProgram extends Resource {
   		this.isFinalized = true
 	}
 
+	public getAttributeLocation(kind: ShaderAttributeKinds): number {
+		return this.attributes[kind].location
+	}
+
+	private getAttributeLocations(): void {
+		let attributes = this.attributes
+		const gl = this.gl
+		const program = this.program
+		let attribNames: Array<string> = Object.keys(attributes)
+		for (let attrib of attribNames) {
+			attributes[attrib].location = gl.getAttribLocation(program, attributes[attrib].name)
+		}
+	}
+
+	public getProgram(): WebGLProgram {
+		return this.program
+	}
+
 	private getUniformLocation(name: string): WebGLUniformLocation {
 		this.assertFinalized('uniform')
 		return this.gl.getUniformLocation(this.program, name)
@@ -138,4 +204,11 @@ class ShaderProgram extends Resource {
 	}
 }
 
-export { Shader, ShaderProgram, ShaderSource, ShaderTypes }
+export { 
+	Shader, 
+	ShaderProgram, 
+	ShaderSource, 
+	ShaderProgramSource, 
+	ShaderTypes,
+	ShaderAttributeKinds
+}

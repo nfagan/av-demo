@@ -1,9 +1,10 @@
-import { ShaderSource, ShaderTypes } from '../shader'
+import { ShaderSource, ShaderProgramSource, ShaderTypes } from '../shader'
 
 namespace _sources {
 	export const vertex: string = `
 		attribute vec3 in_position;
 		attribute vec2 in_uv;
+		attribute vec3 in_normal;
 
 		uniform mat4 model;
 		uniform mat4 projection;
@@ -24,19 +25,18 @@ namespace _sources {
 	`
 }
 
-class Basic {
-	public static readonly sources: Array<ShaderSource> = [
+const Basic: ShaderProgramSource = {
+	sources: [
 		{
 			source: _sources.vertex,
-			type: ShaderTypes.VERTEX,
-			uniforms: ['model', 'projection', 'view'],
+			type: ShaderTypes.VERTEX
 		},
 		{
 			source: _sources.fragment,
 			type: ShaderTypes.FRAGMENT,
-			uniforms: ['color']
 		}
-	]
+	],
+	uniforms: ['model', 'projection', 'view', 'color']
 }
 
 export { Basic }

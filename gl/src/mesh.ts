@@ -1,5 +1,6 @@
 import { Vertex, Topologies } from './vertex'
 import { Resource } from './resource'
+import { ShaderProgram, ShaderAttributeKinds } from './shader'
 
 class Mesh extends Resource {
 
@@ -70,7 +71,7 @@ class Mesh extends Resource {
 		this.isFinalized = true
 	}
 
-	public bind(): void {
+	public bind(program: ShaderProgram): void {
 		if (this.vertices.length === 0)
 			return
 
@@ -85,25 +86,25 @@ class Mesh extends Resource {
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo)
 
 		//	position
-		gl.enableVertexAttribArray(attrib)
-		gl.vertexAttribPointer(attrib, 3, gl.FLOAT, false, stride*bytes, offset*bytes)
+		let posLoc: number = program.getAttributeLocation(ShaderAttributeKinds.position)
+		gl.enableVertexAttribArray(posLoc)
+		gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, stride*bytes, offset*bytes)
 		offset += 3
-		attrib++
 
 		//	uv
 		if (vert0.sizeUV() > 0) {
-			gl.enableVertexAttribArray(attrib)
-			gl.vertexAttribPointer(attrib, 2, gl.FLOAT, false, stride*bytes, offset*bytes)
+			let uvLoc: number = program.getAttributeLocation(ShaderAttributeKinds.uv)
+			gl.enableVertexAttribArray(uvLoc)
+			gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, stride*bytes, offset*bytes)
 			offset += 2
-			attrib++
 		}
 
 		//	normals
 		if (vert0.sizeNormal() > 0) {
-			gl.enableVertexAttribArray(attrib)
-			gl.vertexAttribPointer(attrib, 3, gl.FLOAT, false, stride*bytes, offset*bytes)
+			let normLoc: number = program.getAttributeLocation(ShaderAttributeKinds.normal)
+			gl.enableVertexAttribArray(normLoc)
+			gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, stride*bytes, offset*bytes)
 			offset += 3
-			attrib++
 		}
 
 		//	indices
