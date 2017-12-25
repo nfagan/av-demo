@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "outDir": "./build/",
+        "outFile": "./build/web-aud.js",
+        "sourceMap": true,
+        "noImplicitAny": false,
+        "module": "amd",
+        "target": "es2015"
+    },
+    "include": [
+        "src/*"
+    ],
+    "exclude": [
+        "node_modules/",
+    ]
+}
