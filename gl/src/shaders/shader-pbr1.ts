@@ -136,11 +136,17 @@ namespace _sources {
 			vec3 color;
 		};
 
-		uniform vec3 color;
-		// uniform vec3 light_position;
+		const int n_point_lights = 2;
+
+		uniform PointLight point_lights[n_point_lights];
+
+		uniform bool calculate_lighting;
+
 		uniform vec3 cam_position;
-		uniform vec3 light_color;
+
 		uniform vec3 albedo;
+		uniform float roughness;
+		uniform float metallic;
 
 		varying mediump vec3 v_position;
 		varying mediump vec2 v_uv;
@@ -148,18 +154,20 @@ namespace _sources {
 
 		void main() {
 
-			vec3 light_position = vec3(0.0, 0.0, -1.0);
-			// vec3 albedo = vec3(0.5, 0.25, 0.0);
-			float roughness = 0.4;
-			float metallic = 0.2;
-			vec3 Lo = PBR(v_normal, albedo, roughness, metallic, cam_position, 
-				v_position, light_position, light_color);
+			vec3 Lo = vec3(0.0);
+
+			//	point lights
+			if (calculate_lighting) {
+				for (int i = 0; i < n_point_lights; i++) {
+					Lo += PBR(v_normal, albedo, roughness, metallic, 
+						cam_position, v_position, point_lights[i].position, point_lights[i].color);
+				}
+			}
 
 			vec3 ambient = vec3(0.03) * albedo;
 		    vec3 final_color = ambient + Lo;
 		    
 		    final_color = final_color / (final_color + vec3(1.0));
-		    
 		    final_color = pow(final_color, vec3(1.0/2.2));
 
       		gl_FragColor = vec4(final_color, 1.0);

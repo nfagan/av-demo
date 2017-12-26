@@ -6,6 +6,12 @@ enum ShaderTypes {
 	FRAGMENT
 }
 
+enum ShaderCoreUniforms {
+	model = 'model',
+	projection = 'projection',
+	view = 'view'
+}
+
 type ShaderSource = {
 	source: string,
 	type: ShaderTypes
@@ -28,6 +34,7 @@ enum ShaderAttributeKinds {
 }
 
 class ShaderAttributes {
+
 	position: ShaderAttribute
 	uv: ShaderAttribute
 	normal: ShaderAttribute
@@ -142,6 +149,10 @@ class ShaderProgram extends Resource {
 		this.gl.uniform1f(this.getUniformLocation(name), value)
 	}
 
+	public setb(name: string, value: boolean): void {
+		this.gl.uniform1i(this.getUniformLocation(name), value ? 1 : 0)
+	}
+
 	public setMat4f(name: string, value: mat4) {
 		this.gl.uniformMatrix4fv(this.getUniformLocation(name), false, value)
 	}
@@ -178,6 +189,9 @@ class ShaderProgram extends Resource {
 		let attributes = this.attributes
 		const gl = this.gl
 		const program = this.program
+		//
+		//	@TODO: Avoid string indexing into attributes
+		//
 		let attribNames: Array<string> = Object.keys(attributes)
 		for (let attrib of attribNames) {
 			attributes[attrib].location = gl.getAttribLocation(program, attributes[attrib].name)

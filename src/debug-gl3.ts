@@ -13,13 +13,13 @@ function getPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nLevels: numb
 	return planeModels
 }
 
-async function GL() {
+async function main() {
 
 	//	audio init
 
-	const audioManager = waud.AudioContextManager()
+	const audioManager = new waud.AudioContextManager()
 	const nLevels = 32
-	const analyser = waud.AudioAnalyser(audioManager.getContext(), {levelsCount: nLevels})
+	const analyser = new waud.AudioAnalyser(audioManager.getContext(), {levelsCount: nLevels})
 	const files = ['sep30.mp3']
 
 	analyser.setup()
@@ -70,7 +70,9 @@ async function GL() {
 	let camera: wgl.Camera = new wgl.Camera()
 
 	camera.setPosition(vec3.fromValues(0, 0, 1))
-	prog.setVec3f('light_color', vec3.fromValues(1.0, 0.0, 0.0))
+	prog.setVec3f('point_lights[0].color', vec3.fromValues(1.0, 0.0, 0.0))
+	prog.setVec3f('point_lights[0].position', vec3.fromValues(0.0, 0.0, -1.0))
+	prog.setb('calculate_lighting', true)
 
 	const sphere: wgl.Mesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere)
 	const plane: wgl.Mesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.quad)
@@ -85,10 +87,10 @@ async function GL() {
 	planeModel.setRotation(vec3.fromValues(90, 0, 0))
 	planeModel.setScale(vec3.fromValues(2, 2, 2))
 
-	let keyStates = { 87: false, 65: false, 83: false, 68: false }
+	let keyStates: { [key:string]: boolean } = { 87: false, 65: false, 83: false, 68: false }
 	let keyCodes = Object.keys(keyStates)
 
-	const keySetter = (evt, value) => {
+	const keySetter = (evt: KeyboardEvent, value: boolean) => {
 		keyCodes.map((code) => {
 			if (evt.keyCode == parseInt(code)) {
 				keyStates[code] = value
@@ -100,11 +102,11 @@ async function GL() {
 	let offsetY: number = 0
 	let newMovement: boolean = false
 
-	window.addEventListener('keydown', (evt) => keySetter(evt, true))
-	window.addEventListener('keyup', (evt) => keySetter(evt, false))
+	window.addEventListener('keydown', (evt: KeyboardEvent) => keySetter(evt, true))
+	window.addEventListener('keyup', (evt: KeyboardEvent) => keySetter(evt, false))
 
 	const onLockChange = () => {
-		window.addEventListener('mousemove', (evt) => {
+		window.addEventListener('mousemove', (evt: MouseEvent) => {
 			offsetX = evt.movementX
 			offsetY = evt.movementY
 			newMovement = true
@@ -136,14 +138,12 @@ async function GL() {
 		let currentTime = Date.now()
 		let dt = (currentTime - lastTime) / 1000
 		let speed = 2.0
-		if (keyStates[87])
-			camera.move(wgl.directions.forwards, dt, speed)
-		if (keyStates[65])
-			camera.move(wgl.directions.left, dt, speed)
-		if (keyStates[68])
-			camera.move(wgl.directions.right, dt, speed)
-		if (keyStates[83])
-			camera.move(wgl.directions.backwards, dt, speed)
+
+		if (keyStates[87]) camera.move(wgl.directions.forwards, dt, speed)
+		if (keyStates[65]) camera.move(wgl.directions.left, dt, speed)
+		if (keyStates[68]) camera.move(wgl.directions.right, dt, speed)
+		if (keyStates[83]) camera.move(wgl.directions.backwards, dt, speed)
+
 		if (newMovement) {
 			camera.rotate(offsetX, -offsetY)
 			newMovement = false
@@ -163,4 +163,4 @@ async function GL() {
 	animate()
 }
 
-GL()
+main()

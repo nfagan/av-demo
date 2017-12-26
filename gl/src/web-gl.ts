@@ -10,10 +10,12 @@ import { Camera, directions } from './camera'
 import { PointLight } from './point-light'
 import { Scene } from './scene'
 import { Renderer } from './renderer'
+import { FrameStats } from './frame-stats'
 
 export {
 	Camera,
 	directions,
+	FrameStats,
 	MeshFactory,
 	MeshTypes,
 	MeshLibrary,

@@ -1,22 +1,22 @@
-const Util = {
+class Util {
 	
-	max(arr) {
+	public static max(arr: Array<number>): number {
 		let max = -Infinity
 		for (let i = 0; i < arr.length; i++) {
 			if (arr[i] > max) max = arr[i]
 		}
 		return max
-	},
+	}
 
-	min(arr) {
+	public static min(arr: Array<number>): number {
 		let min = Infinity
 		for (let i = 0; i < arr.length; i++) {
 			if (arr[i] < min) min = arr[i]
 		}
 		return min
-	},
+	}
 
-	isPow2(n) {
+	public static isPow2(n: number): boolean {
 		if (n === 0)
 			return false
 		while (n !== 1) {
