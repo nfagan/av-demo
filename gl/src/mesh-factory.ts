@@ -5,7 +5,33 @@ import { MeshLibrary } from './mesh-library'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Creating_3D_objects_using_WebGL
 
+enum MeshTypes {
+    quad,
+    triangle,
+    sphere,
+    cube
+}
+
 class MeshFactory {
+
+    public static create(gl: WebGLRenderingContext, kind: MeshTypes): Mesh {
+        let mesh: Mesh = new Mesh(gl)
+        switch (kind) {
+            case MeshTypes.quad:
+                MeshFactory.makeQuad(mesh)
+                break
+            case MeshTypes.triangle:
+                MeshFactory.makeTriangle(mesh)
+                break
+            case MeshTypes.sphere:
+                MeshFactory.makeSphere(mesh)
+                break
+            case MeshTypes.cube:
+                MeshFactory.makeCube(mesh)
+                break
+        }
+        return mesh
+    }
 	
 	public static makeQuad(mesh: Mesh) {
 
@@ -35,23 +61,33 @@ class MeshFactory {
 
 	public static makeCube(mesh: Mesh) {
 
-		const float32VertexData: Float32Array = new Float32Array(MeshLibrary.cube.data)
+		const float32VertexData: Float32Array = new Float32Array(MeshLibrary.cube2.data)
 
-		for (let i: number = 0; i < 24; i++) {
+		for (let i: number = 0; i < 36; i++) {
         	let vertex: Vertex = new Vertex()
         	let x, y, z: number
+        	let nx, ny, nz, u, v: number
 
-        	x = float32VertexData[i*3+0]
-        	y = float32VertexData[i*3+1]
-        	z = float32VertexData[i*3+2]
+        	x = float32VertexData[i*8+0]
+        	y = float32VertexData[i*8+1]
+        	z = float32VertexData[i*8+2]
+
+            // these are flipped because they were copied that way,
+            // and im too lazy to change it
+
+        	nx = float32VertexData[i*8+3]
+        	ny = float32VertexData[i*8+4]
+        	nz = float32VertexData[i*8+5]
+
+        	u = float32VertexData[i*8+6]
+        	v = float32VertexData[i*8+7]
 
         	vertex.setPosition(new Float32Array([x, y, z]))
+        	vertex.setNormal(new Float32Array([nx, ny, nz]))
+        	vertex.setUV(new Float32Array([u, v]))
         	mesh.addVertex(vertex)
         }
 
-        const indices = new Uint16Array(MeshLibrary.cube.indices)
-
-        mesh.setIndices(indices)
         mesh.setTopology(Topologies.TRIANGLES)
 	}
 
@@ -133,4 +169,4 @@ class MeshFactory {
 
 }
 
-export { MeshFactory }
+export { MeshFactory, MeshTypes }

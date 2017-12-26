@@ -44,6 +44,16 @@ class Camera {
 		this.position = position
 	}
 
+	public setPitch(pitch: number) {
+		this.pitch = this.constrainPitch(pitch)
+		this.updateCameraVectors()
+	}
+
+	public setYaw(yaw: number) {
+		this.yaw = yaw
+		this.updateCameraVectors()
+	}
+
 	public move(direction: directions, dt: number, speed?: number) {
 		if (!speed)
 			speed = this.movementSpeed
@@ -76,13 +86,17 @@ class Camera {
 
 		this.yaw += (x * sensitivity)
 		this.pitch += (y * sensitivity)
-
-		if (this.pitch > 89.0)
-			this.pitch = 89.0
-		if (this.pitch < -89.0)
-			this.pitch = -89.0
+		this.pitch = this.constrainPitch(this.pitch)
 
 		this.updateCameraVectors()
+	}
+
+	private constrainPitch(pitch: number): number {
+		if (pitch > 89.0)
+			pitch = 89.0
+		if (pitch < -89.0)
+			pitch = -89.0
+		return pitch
 	}
 
 	private updateCameraVectors(): void {

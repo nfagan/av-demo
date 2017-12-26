@@ -17,10 +17,10 @@ namespace _sources {
 	export const fragment: string = `
 		precision mediump float;
 
-		uniform vec3 color;
+		uniform vec3 albedo;
 
 		void main() {
-      		gl_FragColor = vec4(color, 1.0);
+      		gl_FragColor = vec4(albedo, 1.0);
     	}
 	`
 }

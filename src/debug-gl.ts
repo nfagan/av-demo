@@ -20,8 +20,9 @@ const GL = () => {
 
 	if (!gl) throw new Error('Unable to initialize GL context.')
 
+	gl.enable(gl.DEPTH_TEST)
 	gl.clearColor(0.2, 0.2, 0.2, 1.0)
-	gl.clear(gl.COLOR_BUFFER_BIT)
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	const prog: wgl.ShaderProgram = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.PBR1)
 
@@ -33,26 +34,29 @@ const GL = () => {
 
 	planeModel = mat4.translate(planeModel, planeModel, [0, -1, 0])
 	planeModel = mat4.rotate(planeModel, planeModel, glMatrix.toRadian(90), [1, 0, 0])
+	planeModel = mat4.scale(planeModel, planeModel, [2, 2, 2])
 
 	mat4.perspective(projection, 45, canvasWidth/canvasHeight, 0.1, 100)
 	let model: mat4 = mat4.create()
 
 	camera.setPosition(vec3.fromValues(0, 0, 1))
 
-	prog.setMat4f('model', model)
 	prog.setMat4f('projection', projection)
 	prog.setMat4f('view', camera.getViewMatrix())
 	prog.setVec3f('color', vec3.fromValues(1.0, 1.0, 1.0))
+	prog.setVec3f('light_color', vec3.fromValues(1.0, 0.0, 0.0))
 
 	const mesh: wgl.Mesh = new wgl.Mesh(gl)
 	const plane: wgl.Mesh = new wgl.Mesh(gl)
 
-	wgl.MeshFactory.makeSphere(mesh, 128)
+	wgl.MeshFactory.makeSphere(mesh)
 	wgl.MeshFactory.makeQuad(plane)
 	mesh.finalize()
 	plane.finalize()
 	
 	prog.setVec3f('color', vec3.fromValues(0.25, 0.25, 1.0))
+
+	mat4.translate(model, model, [0, -1, 2])
 	mat4.scale(model, model, [0.4, 0.4, 0.4])
 	prog.setMat4f('model', model)
 
@@ -93,7 +97,7 @@ const GL = () => {
 	const animate = () => {
 		let currentTime = Date.now()
 		let dt = (currentTime - lastTime) / 1000
-		let speed = 0.5
+		let speed = 2.0
 		if (keyStates[87])
 			camera.move(wgl.directions.forwards, dt, speed)
 		if (keyStates[65])
@@ -110,7 +114,7 @@ const GL = () => {
 		prog.setVec3f('cam_position', camera.position)
 		lastTime = currentTime
 		gl.clearColor(0.2, 0.2, 0.2, 1.0)
-		gl.clear(gl.COLOR_BUFFER_BIT)
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		prog.setMat4f('model', model)
 		mesh.bind(prog)
 		mesh.draw()

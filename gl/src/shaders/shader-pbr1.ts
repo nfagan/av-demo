@@ -56,7 +56,7 @@ namespace _sources {
 		    //
 		    
 		    float distance = length(light_position - world_position);
-		    float attenuation = 1.0 / (distance * distance * 0.02);
+		    float attenuation = 1.0 / (distance * distance * 0.0002);
 		    
 		    vec3 radiance = light_color * attenuation;
 		    
@@ -131,9 +131,16 @@ namespace _sources {
 		    return ggx1 * ggx2;
 		}
 
+		struct PointLight {
+			vec3 position;
+			vec3 color;
+		};
+
 		uniform vec3 color;
 		// uniform vec3 light_position;
 		uniform vec3 cam_position;
+		uniform vec3 light_color;
+		uniform vec3 albedo;
 
 		varying mediump vec3 v_position;
 		varying mediump vec2 v_uv;
@@ -142,8 +149,7 @@ namespace _sources {
 		void main() {
 
 			vec3 light_position = vec3(0.0, 0.0, -1.0);
-			vec3 light_color = vec3(0.9);
-			vec3 albedo = vec3(0.5, 0.25, 0.0);
+			// vec3 albedo = vec3(0.5, 0.25, 0.0);
 			float roughness = 0.4;
 			float metallic = 0.2;
 			vec3 Lo = PBR(v_normal, albedo, roughness, metallic, cam_position, 

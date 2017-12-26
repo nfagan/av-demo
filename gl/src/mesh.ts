@@ -163,6 +163,12 @@ class Mesh extends Resource {
 		if (this.isFinalized)
 			throw new Error(`Method / operation "${op}" was called after finalizing mesh.`)
 	}
+
+	public static compareUUID(a: Mesh, b: Mesh): number {
+		if (a.uuid === b.uuid)
+			return 0
+		return 1
+	}
 }
 
 export { Mesh }
