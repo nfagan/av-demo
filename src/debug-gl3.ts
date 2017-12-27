@@ -58,7 +58,7 @@ async function main() {
 	if (!gl) throw new Error('Unable to initialize GL context.')
 
 	const scene = new wgl.Scene(gl)
-	const renderer = new wgl.Renderer(gl)
+	const renderer = new wgl.renderers.main(gl)
 
 	renderer.setAspect(canvasWidth/canvasHeight)
 

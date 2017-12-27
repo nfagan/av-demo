@@ -1,47 +1,16 @@
 import { mat4, vec3 } from 'gl-matrix'
-import { Scene } from './scene'
-import { Camera } from './camera'
-import { ShaderProgram } from './shader'
-import { Model } from './model'
+import { Scene } from '../scene'
+import { Camera } from '../camera'
+import { ShaderProgram } from '../shader'
+import { Model } from '../model'
+import base from './base-renderer'
 
-class Renderer {
+export default class extends base {
 
-	private gl: WebGLRenderingContext
-	private projection: mat4
-	private clearColor: vec3
-	private fov: number = 45.0
-	private near: number = 0.1
-	private far: number = 100.0
-	private aspect: number = 1.0
 	private lastModel: Model = null
 
 	constructor(gl: WebGLRenderingContext) {
-		this.gl = gl
-		this.projection = this.getProjectionMatrix()
-		this.clearColor = vec3.fromValues(0.2, 0.2, 0.2)
-		this.setup()
-	}
-
-	private setup(): void {
-		const gl = this.gl
-		gl.enable(gl.DEPTH_TEST)
-	}
-
-	private prepare(): void {
-		const gl = this.gl
-		const cc = this.clearColor
-		gl.clearColor(cc[0], cc[1], cc[2], 1.0)
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	}
-
-	public setAspect(ar: number) {
-		this.aspect = ar
-		this.projection = this.getProjectionMatrix()
-	}
-
-	public getProjectionMatrix(): mat4 {
-		let projection = mat4.create()
-		return mat4.perspective(projection, this.fov, this.aspect, this.near, this.far)
+		super(gl)
 	}
 
 	private configureNewShader(prog: ShaderProgram, camera: Camera): void {
@@ -59,7 +28,7 @@ class Renderer {
 	}
 
 	public render(scene: Scene, camera: Camera): void {
-		this.prepare()
+		this.clear()
 
 		if (!scene.modelsSorted) {
 			scene.sortModels()
@@ -115,4 +84,4 @@ class Renderer {
 	}
 }
 
-export { Renderer }
+// export { Renderer }

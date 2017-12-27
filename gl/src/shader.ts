@@ -1,5 +1,10 @@
 import { mat4, vec3 } from 'gl-matrix'
 import { Resource } from './resource'
+import { vector } from './util'
+
+type LocationMappable = {
+	[key: string]: WebGLUniformLocation
+}
 
 enum ShaderTypes {
 	VERTEX,
@@ -112,6 +117,8 @@ class ShaderProgram extends Resource {
 	private shaders: Array<Shader>
 	private program?: WebGLProgram
 	private attributes: ShaderAttributes
+	private _isBound: boolean = false
+	private uniformLocations: LocationMappable = {}
 
 	public isValid: boolean = true
 	public isFinalized: boolean = false
@@ -136,11 +143,17 @@ class ShaderProgram extends Resource {
 	public bind(): void {
 		this.assertFinalized('bind')
 		this.gl.useProgram(this.program)
+		this._isBound = true
 	}
 
 	public unbind(): void {
 		this.assertFinalized('unbind')
 		this.gl.useProgram(null)
+		this._isBound = false
+	}
+
+	public isBound(): boolean {
+		return this._isBound
 	}
 
 	//	set uniforms
@@ -157,7 +170,8 @@ class ShaderProgram extends Resource {
 		this.gl.uniformMatrix4fv(this.getUniformLocation(name), false, value)
 	}
 
-	public setVec3f(name: string, value: vec3) {
+	public setVec3f(name: string, value: vec3 | Array<number> | number) {
+		value = vector.requireVec3(value)
 		this.gl.uniform3fv(this.getUniformLocation(name), value)
 	}
 
@@ -204,7 +218,16 @@ class ShaderProgram extends Resource {
 
 	private getUniformLocation(name: string): WebGLUniformLocation {
 		this.assertFinalized('uniform')
-		return this.gl.getUniformLocation(this.program, name)
+		let loc: WebGLUniformLocation = this.uniformLocations[name]
+		if (loc === undefined) {
+			loc = this.gl.getUniformLocation(this.program, name)
+			if (loc == null) {
+				console.warn(`Unrecognized uniform name "${name}".`)
+			} else {
+				this.uniformLocations[name] = loc
+			}
+		}
+		return loc
 	}
 
 	private assertNotFinalized(op: string): void {

@@ -13,10 +13,10 @@ function makeVec3(x: number, y: number, z: number): vec3 {
 function getPlaneMatrices(nLevels: number): Array<mat4> {
 	let planeModels: Array<mat4> = []
 	for (let i: number = 0; i < nLevels; i++) {
-		let planeModel: mat4 = mat4.create()
-		mat4.translate(planeModel, planeModel, [0, -i-1, 0])
-		mat4.rotate(planeModel, planeModel, glMatrix.toRadian(90), [1, 0, 0])
-		// mat4.scale(planeModel, planeModel, makeVec3(2, 10, 2))
+		let planeModel = new wgl.util.matrix.transform()
+			.translate([0, -i-1, 0])
+			.rotate(wgl.math.radians(90), [1, 0, 0])
+			.mat()
 		planeModels.push(planeModel)
 	}
 	return planeModels
@@ -74,6 +74,8 @@ async function main() {
 	window.addEventListener('keydown', (evt: KeyboardEvent) => {
 		if (evt.keyCode == 32)
 			togglePlay()
+		if (evt.keyCode == 192)
+			audioManager.stop(files[0])
 	})
 
 	initStats()
@@ -100,49 +102,44 @@ async function main() {
 
 	if (!gl) throw new Error('Unable to initialize GL context.')
 
-	gl.enable(gl.DEPTH_TEST)
-	gl.clearColor(0.2, 0.2, 0.2, 1.0)
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
+	const renderer = new wgl.renderers.functional(gl)
 	const prog: wgl.ShaderProgram = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.PBR1)
-
-	prog.bind()
-
 	let camera: wgl.Camera = new wgl.Camera()
-	let projection: mat4 = mat4.create()
-	let planeModel: mat4 = mat4.create()
-	let lightModel: mat4 = mat4.create()
 
-	mat4.translate(planeModel, planeModel, [0, -1, 0])
-	mat4.rotate(planeModel, planeModel, glMatrix.toRadian(90), [1, 0, 0])
-	mat4.scale(planeModel, planeModel, [2, 2, 2])
+	renderer.setAspect(canvasWidth/canvasHeight)
+	renderer.configure(prog)
 
-	mat4.perspective(projection, 45, canvasWidth/canvasHeight, 0.1, 100)
-	let sphereModel: mat4 = mat4.create()
+	const firstLight: wgl.Light = new wgl.Light(gl)
+	firstLight.setColor([1, 0, 0])
+	firstLight.setPosition([0, 0, -1])
 
-	prog.setMat4f('projection', projection)
+	let planeModel = new wgl.util.matrix.transform()
+		.translate([0, -1, 0])
+		.rotate(wgl.math.radians(90), [1, 0, 0])
+		.scale([2, 2, 2])
+		.mat()
 
-	const mesh: wgl.Mesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere)
-	const plane: wgl.Mesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.quad)
-	const lightMesh: wgl.Mesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere)
+	let sphereModel = new wgl.util.matrix.transform()
+		.translate([0, -5, 4])
+		.scale([0.4, 0.4, 0.4])
+		.mat()
 
-	mesh.finalize()
-	plane.finalize()
-	lightMesh.finalize()
+	let lightModel = new wgl.util.matrix.transform()
+		.translate(firstLight.position)
+		.mat()
 
-	const lightPosition = makeVec3(0, 0, -1)
-	mat4.translate(lightModel, lightModel, lightPosition)
-	
-	prog.setVec3f('point_lights[0].position', lightPosition)
-	prog.setVec3f('point_lights[0].color', makeVec3(1.0, 0.0, 0.0))
+	const meshCreateOpts = { finalize: true }
+	const oscillatingSphere = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere, meshCreateOpts)
+	const plane = wgl.MeshFactory.create(gl, wgl.MeshTypes.quad, meshCreateOpts)
+	const lightMesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere, meshCreateOpts)
 
-	prog.setVec3f('albedo', vec3.fromValues(0.5, 1.0, 0.0))
+	let planeAlbedo = makeVec3(0.5, 1.0, 0.0)
+
+	prog.setVec3f('albedo', planeAlbedo)
 	prog.setf('roughness', 0.4)
 	prog.setf('metallic', 0.2)
 
-	mat4.translate(sphereModel, sphereModel, [0, -5, 4])
-	mat4.scale(sphereModel, sphereModel, [0.4, 0.4, 0.4])
-	prog.setMat4f('model', sphereModel)
+	renderer.configureTransform(prog, sphereModel)
 
 	let keyStates: { [key:string]: boolean } = { 87: false, 65: false, 83: false, 68: false }
 	let keyCodes = Object.keys(keyStates)
@@ -191,8 +188,7 @@ async function main() {
 
 	const animate = () => {
 
-		gl.clearColor(0.2, 0.2, 0.2, 1.0)
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		renderer.clear()
 
 		let currentTime = Date.now()
 		let dt = (currentTime - lastTime) / 1000
@@ -212,12 +208,11 @@ async function main() {
 			newMovement = false
 		}
 
-		prog.setb('calculate_lighting', true)
-		prog.setVec3f('albedo', vec3.fromValues(0.5, 1.0, 0.0))
-		prog.setMat4f('view', camera.getViewMatrix())
-		prog.setVec3f('cam_position', camera.position)
+		renderer.configureCamera(prog, camera)
 
-		plane.bind(prog)
+		prog.setVec3f('albedo', planeAlbedo)
+
+		firstLight.active = true
 
 		analyser.update()
 		let levels = analyser.getLevels()
@@ -225,38 +220,33 @@ async function main() {
 
 		for (let i: number = 0; i < planeModels.length; i++) {
 			let displacement = wave[i] * .1
-			mat4.translate(planeModelCopies[i], planeModels[i], vec3.fromValues(0, displacement, 0))
-			// prog.setMat4f('model', planeModelCopies[i])
-			prog.setMat4f('model', planeModels[i])
-			prog.setVec3f('point_lights[0].color', vec3.fromValues(levels[i], 0, 1-levels[i]))
-			plane.draw()
+			mat4.translate(planeModelCopies[i], planeModels[i], [0, displacement, 0])
+			firstLight.setColor([levels[i], 0, 1-levels[i]])
+			renderer.configureTransform(prog, planeModels[i])
+			renderer.configureLight(prog, firstLight)
+			renderer.draw(prog, plane)
 		}
 
-		plane.unbind()
-
 		let sphereModelCopy = mat4.copy(mat4.create(), sphereModel)
-		mat4.translate(sphereModelCopy, sphereModelCopy, vec3.fromValues(0, wave[0]*0.2, 0))
+		mat4.translate(sphereModelCopy, sphereModelCopy, [0, wave[0]*0.2, 0])
 
-		prog.setVec3f('point_lights[0].color', vec3.fromValues(levels[0], 0, 1-levels[0]))
-		prog.setMat4f('model', sphereModelCopy)
+		firstLight.setColor([levels[0], 0, 1-levels[0]])
+		renderer.configureLight(prog, firstLight)
+		renderer.configureTransform(prog, sphereModelCopy)
 
-		mesh.bind(prog)
-		mesh.draw()
-		mesh.unbind()
+		renderer.draw(prog, oscillatingSphere)
 
 		if (DEBUG.drawLightSpheres) {
-			prog.setb('calculate_lighting', false)
-			prog.setVec3f('albedo', makeVec3(levels[0], 0, 1-levels[0]))
-			prog.setMat4f('model', lightModel)
-			lightMesh.bind(prog)
-			lightMesh.draw()
-			lightMesh.unbind()
+			firstLight.active = false
+			renderer.configureLight(prog, firstLight)
+			prog.setVec3f('albedo', [1, 1, 1])
+			renderer.configureTransform(prog, lightModel)
+			renderer.draw(prog, lightMesh)
 		}
 
 		window.requestAnimationFrame(animate)
 	}
 
-	mesh.bind(prog)
 	animate()
 }
 

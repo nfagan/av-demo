@@ -1,5 +1,5 @@
 import { mat4, vec3, glMatrix } from 'gl-matrix'
-import { wgl } from './wgl-math'
+import * as wgl from './wgl-math'
 
 enum directions {
 	forwards,
@@ -36,7 +36,7 @@ class Camera {
 		let front = this.front
 		let up = this.up
 		vec3.add(target, position, front)
-		wgl.mat4.lookAt(view, position, target, up)
+		wgl.lookAt(view, position, target, up)
 		return view
 	}
 

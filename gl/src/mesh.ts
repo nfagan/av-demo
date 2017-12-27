@@ -9,6 +9,7 @@ class Mesh extends Resource {
 	private vbo: WebGLBuffer
 	private ebo: WebGLBuffer
 	private isFinalized: boolean = false
+	private _isBound: boolean = false
 
 	private vertices: Array<Vertex> = []
 	private indices: Uint16Array = new Uint16Array(0)
@@ -51,6 +52,7 @@ class Mesh extends Resource {
 	}
 
 	public draw(): void {
+		this.assertFinalized('draw')
 		const gl = this.gl
 		let nIndices: number = this.indices.length
 		let useIndices: boolean = nIndices > 0
@@ -71,7 +73,12 @@ class Mesh extends Resource {
 		this.isFinalized = true
 	}
 
+	public isBound(): boolean {
+		return this._isBound
+	}
+
 	public bind(program: ShaderProgram): void {
+		this.assertFinalized('bind')
 		if (this.vertices.length === 0)
 			return
 
@@ -111,6 +118,8 @@ class Mesh extends Resource {
 		if (nIndices > 0) {
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo)
 		}
+
+		this._isBound = true
 	}
 
 	public unbind(): void {
@@ -120,6 +129,7 @@ class Mesh extends Resource {
 		if (indices.length > 0) {
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null)
 		}
+		this._isBound = false
 	}
 
 
@@ -162,6 +172,11 @@ class Mesh extends Resource {
 			op = '(unspecified)'
 		if (this.isFinalized)
 			throw new Error(`Method / operation "${op}" was called after finalizing mesh.`)
+	}
+
+	private assertFinalized(op: string = '(unspecified)'): void {
+		if (!this.isFinalized)
+			throw new Error(`Method / operation "${op}" was called before finalizing mesh.`)	
 	}
 
 	public static compareUUID(a: Mesh, b: Mesh): number {

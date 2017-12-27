@@ -2,6 +2,8 @@ import { Resource } from './resource'
 import { Mesh } from './mesh'
 import { mat4, vec3, glMatrix } from 'gl-matrix'
 import { ShaderProgram } from './shader'
+import { matrix } from './util'
+import * as math from './wgl-math'
 
 class Model extends Resource {
 
@@ -54,13 +56,13 @@ class Model extends Resource {
 	}
 
 	public getTransformationMatrix(): mat4 {
-		let transform = mat4.create()
-		mat4.translate(transform, transform, this.position)
-		mat4.rotate(transform, transform, glMatrix.toRadian(this.rotation[0]), [1, 0, 0])
-		mat4.rotate(transform, transform, glMatrix.toRadian(this.rotation[1]), [0, 1, 0])
-		mat4.rotate(transform, transform, glMatrix.toRadian(this.rotation[2]), [0, 0, 1])
-		mat4.scale(transform, transform, this.scale)
-		return transform
+		return new matrix.transform()
+			.translate(this.position)
+			.rotate(math.radians(this.rotation[0]), [1, 0, 0])
+			.rotate(math.radians(this.rotation[1]), [0, 1, 0])
+			.rotate(math.radians(this.rotation[2]), [0, 0, 1])
+			.scale(this.scale)
+			.mat()
 	}
 
 	public static compareMeshUUID(a: Model, b: Model): number {

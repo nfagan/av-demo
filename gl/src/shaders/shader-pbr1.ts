@@ -154,21 +154,24 @@ namespace _sources {
 
 		void main() {
 
-			vec3 Lo = vec3(0.0);
+			vec3 final_color = albedo;
 
 			//	point lights
 			if (calculate_lighting) {
+
+				vec3 Lo = vec3(0.0);
+
 				for (int i = 0; i < n_point_lights; i++) {
 					Lo += PBR(v_normal, albedo, roughness, metallic, 
 						cam_position, v_position, point_lights[i].position, point_lights[i].color);
 				}
-			}
 
-			vec3 ambient = vec3(0.03) * albedo;
-		    vec3 final_color = ambient + Lo;
-		    
-		    final_color = final_color / (final_color + vec3(1.0));
-		    final_color = pow(final_color, vec3(1.0/2.2));
+				vec3 ambient = vec3(0.03) * albedo;
+
+			    final_color = ambient + Lo;
+			    final_color = final_color / (final_color + vec3(1.0));
+			    final_color = pow(final_color, vec3(1.0/2.2));
+			}
 
       		gl_FragColor = vec4(final_color, 1.0);
     	}

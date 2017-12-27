@@ -1,7 +1,7 @@
 import { Vertex, Topologies } from './vertex'
 import { Mesh } from './mesh'
-import { Util } from './util'
 import { MeshLibrary } from './mesh-library'
+import * as math from './wgl-math'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Creating_3D_objects_using_WebGL
 
@@ -12,9 +12,26 @@ enum MeshTypes {
     cube
 }
 
+type MeshCreateOptions = {
+    finalize: boolean
+    vertexCount: number
+}
+
 class MeshFactory {
 
-    public static create(gl: WebGLRenderingContext, kind: MeshTypes): Mesh {
+    public static Defaults(): MeshCreateOptions {
+        return {
+            finalize: false,
+            vertexCount: 64
+        }
+    }
+
+    public static create(gl: WebGLRenderingContext, 
+        kind: MeshTypes, inOpts: Object = MeshFactory.Defaults()): Mesh {
+
+        const opts = MeshFactory.Defaults()
+        Object.assign(opts, inOpts)
+
         let mesh: Mesh = new Mesh(gl)
         switch (kind) {
             case MeshTypes.quad:
@@ -24,12 +41,16 @@ class MeshFactory {
                 MeshFactory.makeTriangle(mesh)
                 break
             case MeshTypes.sphere:
-                MeshFactory.makeSphere(mesh)
+                MeshFactory.makeSphere(mesh, opts.vertexCount)
                 break
             case MeshTypes.cube:
                 MeshFactory.makeCube(mesh)
                 break
         }
+
+        if (opts.finalize)
+            mesh.finalize()
+
         return mesh
     }
 	
@@ -118,7 +139,7 @@ class MeshFactory {
 	}
 
 	public static makeSphere(mesh: Mesh, vertexCount: number = 64) {
-		if (!Util.isPow2(vertexCount))
+		if (!math.isPow2(vertexCount))
 			throw new Error('Vertex count must be a power of 2.')
 
 		for (let i: number = 0; i < vertexCount; i++) {
