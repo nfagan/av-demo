@@ -2,49 +2,42 @@ import { Resource } from './resource'
 import { Mesh } from './mesh'
 import { mat4, vec3, glMatrix } from 'gl-matrix'
 import { ShaderProgram } from './shader'
-import { matrix } from './util'
+import { matrix, types, vector } from './util'
 import * as math from './wgl-math'
+import * as Material from './material'
 
 class Model extends Resource {
 
 	private gl: WebGLRenderingContext
 	public mesh: Mesh
 	public program: ShaderProgram
+	public material: Material.Material
 
 	private position: vec3
 	private rotation: vec3
 	private scale: vec3
-	private color: vec3
 
-	constructor(gl: WebGLRenderingContext, mesh: Mesh, program: ShaderProgram) {
+	constructor(gl: WebGLRenderingContext, program: ShaderProgram, mesh: Mesh, material: Material.Material) {
 		super()
 		this.gl = gl
-		this.mesh = mesh
 		this.program = program
+		this.mesh = mesh
+		this.material = material
 		this.position = vec3.fromValues(0, 0, 0)
 		this.rotation = vec3.fromValues(0, 0, 0)
 		this.scale = vec3.fromValues(1, 1, 1)
-		this.color = vec3.fromValues(1, 1, 1)
 	}
 
-	public setPosition(pos: vec3): void {
-		this.position = pos
+	public setPosition(pos: types.isVec3Convertible): void {
+		this.position = vector.requireVec3(pos)
 	}
 
-	public setColor(color: vec3): void {
-		this.color = color
+	public setRotation(rot: types.isVec3Convertible): void {
+		this.rotation = vector.requireVec3(rot)
 	}
 
-	public setRotation(rot: vec3): void {
-		this.rotation = rot
-	}
-
-	public setScale(scale: vec3): void {
-		this.scale = scale
-	}
-
-	public getColor(): vec3 {
-		return this.color
+	public setScale(scale: types.isVec3Convertible): void {
+		this.scale = vector.requireVec3(scale)
 	}
 
 	public bind(): void {

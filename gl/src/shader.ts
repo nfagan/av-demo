@@ -1,6 +1,6 @@
 import { mat4, vec3 } from 'gl-matrix'
 import { Resource } from './resource'
-import { vector } from './util'
+import { vector, types } from './util'
 
 type LocationMappable = {
 	[key: string]: WebGLUniformLocation
@@ -9,12 +9,6 @@ type LocationMappable = {
 enum ShaderTypes {
 	VERTEX,
 	FRAGMENT
-}
-
-enum ShaderCoreUniforms {
-	model = 'model',
-	projection = 'projection',
-	view = 'view'
 }
 
 type ShaderSource = {
@@ -32,13 +26,12 @@ type ShaderAttribute = {
 	location: number
 }
 
-enum ShaderAttributeKinds {
-	position = 'position',
-	uv = 'uv',
-	normal = 'normal'
-}
+type ShaderAttributeKinds = 'position' | 'uv' | 'normal'
+type ShaderCoreUniformKinds = 'model' | 'view' | 'projection' | 'camera_position'
 
 class ShaderAttributes {
+
+	[key: string]: ShaderAttribute
 
 	position: ShaderAttribute
 	uv: ShaderAttribute
@@ -156,7 +149,19 @@ class ShaderProgram extends Resource {
 		return this._isBound
 	}
 
-	//	set uniforms
+	public setUniform(name: string, value: number | boolean | mat4 | vec3 | Array<number>) {
+		if (typeof(value) == 'number') {
+			this.setf(name, value)
+		} else if (typeof(value) == 'boolean') {
+			this.setb(name, value)
+		} else if (Array.isArray(value)) {
+			this.setVec3f(name, value)
+		} else if (types.isMat4(value)) {
+			this.setMat4f(name, value)
+		} else if (types.isVec3(value)) {
+			this.setVec3f(name, value)
+		}
+	}
 
 	public setf(name: string, value: number): void {
 		this.gl.uniform1f(this.getUniformLocation(name), value)
@@ -247,5 +252,6 @@ export {
 	ShaderSource, 
 	ShaderProgramSource, 
 	ShaderTypes,
-	ShaderAttributeKinds
+	ShaderAttributeKinds,
+	ShaderCoreUniformKinds
 }

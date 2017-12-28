@@ -1,6 +1,7 @@
 import { MeshFactory, MeshTypes } from './mesh-factory'
 import { MeshLibrary } from './mesh-library'
-import { Light } from './light'
+import * as Material from './material'
+import * as Light from './light'
 import { Mesh } from './mesh'
 import { Model } from './model'
 import { Vertex, Topologies } from './vertex'
@@ -13,13 +14,16 @@ import { FrameStats } from './frame-stats'
 import * as renderers from './renderers'
 import * as math from './wgl-math'
 import * as util from './util'
+import { Canvas } from './canvas'
 
 export {
 	Camera,
+	Canvas,
 	directions,
 	FrameStats,
 	Light,
 	math,
+	Material,
 	MeshFactory,
 	MeshTypes,
 	MeshLibrary,

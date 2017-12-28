@@ -1,5 +1,6 @@
-import { mat4, vec3, glMatrix } from 'gl-matrix'
-import * as wgl from './wgl-math'
+import { quat, mat4, vec3, glMatrix } from 'gl-matrix'
+import { vector, types } from './util'
+import * as math from './wgl-math'
 
 enum directions {
 	forwards,
@@ -36,12 +37,12 @@ class Camera {
 		let front = this.front
 		let up = this.up
 		vec3.add(target, position, front)
-		wgl.lookAt(view, position, target, up)
+		math.lookAt(view, position, target, up)
 		return view
 	}
 
-	public setPosition(position: vec3) { 
-		this.position = position
+	public setPosition(position: types.isVec3Convertible) {
+		this.position = vector.requireVec3(position)
 	}
 
 	public setPitch(pitch: number) {

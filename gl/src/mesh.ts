@@ -93,14 +93,14 @@ class Mesh extends Resource {
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo)
 
 		//	position
-		let posLoc: number = program.getAttributeLocation(ShaderAttributeKinds.position)
+		let posLoc: number = program.getAttributeLocation('position')
 		gl.enableVertexAttribArray(posLoc)
 		gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, stride*bytes, offset*bytes)
 		offset += 3
 
 		//	uv
 		if (vert0.sizeUV() > 0) {
-			let uvLoc: number = program.getAttributeLocation(ShaderAttributeKinds.uv)
+			let uvLoc: number = program.getAttributeLocation('uv')
 			gl.enableVertexAttribArray(uvLoc)
 			gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, stride*bytes, offset*bytes)
 			offset += 2
@@ -108,7 +108,7 @@ class Mesh extends Resource {
 
 		//	normals
 		if (vert0.sizeNormal() > 0) {
-			let normLoc: number = program.getAttributeLocation(ShaderAttributeKinds.normal)
+			let normLoc: number = program.getAttributeLocation('normal')
 			gl.enableVertexAttribArray(normLoc)
 			gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, stride*bytes, offset*bytes)
 			offset += 3
@@ -177,12 +177,6 @@ class Mesh extends Resource {
 	private assertFinalized(op: string = '(unspecified)'): void {
 		if (!this.isFinalized)
 			throw new Error(`Method / operation "${op}" was called before finalizing mesh.`)	
-	}
-
-	public static compareUUID(a: Mesh, b: Mesh): number {
-		if (a.uuid === b.uuid)
-			return 0
-		return 1
 	}
 }
 

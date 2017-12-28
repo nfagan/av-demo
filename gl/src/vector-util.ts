@@ -1,4 +1,5 @@
 import * as glm from 'gl-matrix'
+import * as types from './type-util'
 
 export function requireVec3(val: glm.vec3 | Array<number> | number): glm.vec3 {
 	if (val instanceof Array) {
@@ -10,4 +11,14 @@ export function requireVec3(val: glm.vec3 | Array<number> | number): glm.vec3 {
 		val = glm.vec3.fromValues(val, val, val)
 	}
 	return val
+}
+
+export function cloneVec3Convertible(data: types.isVec3Convertible): types.isVec3Convertible {
+	if (typeof(data) == 'number') {
+		return data
+	} else if (Array.isArray(data)) {
+		return data.slice()
+	} else {
+		return glm.vec3.clone(data)
+	}
 }

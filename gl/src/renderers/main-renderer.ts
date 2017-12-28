@@ -19,7 +19,7 @@ export default class extends base {
 
 	private configureModel(prog: ShaderProgram, model: Model): void {
 		prog.setMat4f('model', model.getTransformationMatrix())
-		prog.setVec3f('albedo', model.getColor())
+		// prog.setVec3f('albedo', model.getColor())
 	}
 
 	private configureCamera(prog: ShaderProgram, camera: Camera): void {
@@ -31,7 +31,7 @@ export default class extends base {
 		this.clear()
 
 		if (!scene.modelsSorted) {
-			scene.sortModels()
+			scene.sortModels(Model.compareMeshUUID)
 		}
 
 		let isFirstShader: boolean = true

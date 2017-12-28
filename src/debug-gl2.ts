@@ -86,19 +86,10 @@ async function main() {
 	document.body.style.margin = '0'
 	document.body.style.position = 'fixed'
 
-	const canvas = document.createElement('canvas')
-	document.body.appendChild(canvas)
+	const canvas = new wgl.Canvas()
+	const canvasElement = canvas.element
 
-	const dpr: number = window.devicePixelRatio || 1
-	const canvasWidth = window.innerWidth
-	const canvasHeight = window.innerHeight
-
-	canvas.style.width = canvasWidth + 'px'
-	canvas.style.height = canvasHeight + 'px'
-	canvas.width = canvas.clientWidth * dpr
-	canvas.height = canvas.clientHeight * dpr
-
-	const gl: WebGLRenderingContext = canvas.getContext('webgl')
+	const gl: WebGLRenderingContext = canvasElement.getContext('webgl')
 
 	if (!gl) throw new Error('Unable to initialize GL context.')
 
@@ -106,10 +97,9 @@ async function main() {
 	const prog: wgl.ShaderProgram = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.PBR1)
 	let camera: wgl.Camera = new wgl.Camera()
 
-	renderer.setAspect(canvasWidth/canvasHeight)
-	renderer.configure(prog)
+	renderer.setAspect(canvas.aspect)
 
-	const firstLight: wgl.Light = new wgl.Light(gl)
+	const firstLight = new wgl.Light.Lights.Point(gl)
 	firstLight.setColor([1, 0, 0])
 	firstLight.setPosition([0, 0, -1])
 
@@ -125,7 +115,7 @@ async function main() {
 		.mat()
 
 	let lightModel = new wgl.util.matrix.transform()
-		.translate(firstLight.position)
+		.translate(firstLight.getPosition())
 		.mat()
 
 	const meshCreateOpts = { finalize: true }
@@ -133,11 +123,8 @@ async function main() {
 	const plane = wgl.MeshFactory.create(gl, wgl.MeshTypes.quad, meshCreateOpts)
 	const lightMesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere, meshCreateOpts)
 
-	let planeAlbedo = makeVec3(0.5, 1.0, 0.0)
-
-	prog.setVec3f('albedo', planeAlbedo)
-	prog.setf('roughness', 0.4)
-	prog.setf('metallic', 0.2)
+	let planeMaterial = new wgl.Material.Materials.Physical(gl, [0.5, 1.0, 0.0], 0.4, 0.2)
+	let lightSphereMaterial = new wgl.Material.Materials.Physical(gl, [1, 1, 1], 0.4, 0.2)
 
 	renderer.configureTransform(prog, sphereModel)
 
@@ -169,9 +156,9 @@ async function main() {
 
 	document.addEventListener('pointerlockchange', onLockChange, false)
 
-	canvas.onclick = () => {
-		if (canvas.requestPointerLock)
-			canvas.requestPointerLock()
+	canvasElement.onclick = () => {
+		if (canvasElement.requestPointerLock)
+			canvasElement.requestPointerLock()
 		togglePlay()
 	}
 
@@ -181,6 +168,8 @@ async function main() {
 	camera.setPosition(vec3.fromValues(13, 8, 12))
 	camera.setPitch(-53)
 	camera.setYaw(-508)
+
+	renderer.configureCamera(prog, camera)
 
 	let planeModelCopies: Array<mat4> = planeModels.map(model => mat4.create())
 
@@ -209,14 +198,15 @@ async function main() {
 		}
 
 		renderer.configureCamera(prog, camera)
-
-		prog.setVec3f('albedo', planeAlbedo)
-
-		firstLight.active = true
+		renderer.configureMaterial(prog, planeMaterial)
 
 		analyser.update()
 		let levels = analyser.getLevels()
 		let wave = analyser.getWave()
+
+		// let attr = planeMaterial.setRoughness(0.1)
+
+		firstLight.setActive(true)
 
 		for (let i: number = 0; i < planeModels.length; i++) {
 			let displacement = wave[i] * .1
@@ -237,9 +227,9 @@ async function main() {
 		renderer.draw(prog, oscillatingSphere)
 
 		if (DEBUG.drawLightSpheres) {
-			firstLight.active = false
+			firstLight.setActive(false)
 			renderer.configureLight(prog, firstLight)
-			prog.setVec3f('albedo', [1, 1, 1])
+			renderer.configureMaterial(prog, lightSphereMaterial)
 			renderer.configureTransform(prog, lightModel)
 			renderer.draw(prog, lightMesh)
 		}

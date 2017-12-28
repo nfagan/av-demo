@@ -1,5 +1,5 @@
 import * as glm from 'gl-matrix'
-import { vector } from './util'
+import { vector, types } from './util'
 
 export class transform {
 
@@ -13,19 +13,19 @@ export class transform {
 		}
 	}
 
-	public translate(val: glm.vec3 | Array<number>): transform {
+	public translate(val: types.isVec3Convertible): transform {
 		val = vector.requireVec3(val)
 		glm.mat4.translate(this.data, this.data, val)
 		return this
 	}
 
-	public rotate(rad: number, axis: glm.vec3 | Array<number>): transform {
+	public rotate(rad: number, axis: types.isVec3Convertible): transform {
 		axis = vector.requireVec3(axis)
 		glm.mat4.rotate(this.data, this.data, rad, axis)
 		return this
 	}
 
-	public scale(val: glm.vec3 | Array<number> | number): transform {
+	public scale(val: types.isVec3Convertible): transform {
 		val = vector.requireVec3(val)
 		glm.mat4.scale(this.data, this.data, val)
 		return this

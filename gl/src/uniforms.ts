@@ -1,53 +1,42 @@
-import { LightTypes } from './light'
+import { types } from './util'
+import * as _Light from './light'
+import * as _Material from './material'
+import * as _Shader from './shader'
 
-type StringMappable = {
-	[key: string]: string
-}
+export namespace Maps {
 
-type LightUniformT = {
-	[key: string]: StringMappable | string,
-	name: string,
-	properties: StringMappable
-}
+	export class Material {
+		static items: { [K in _Material.AttributeNames]: string } = {
+			'albedo': 'albedo',
+			'roughness': 'roughness',
+			'metallic': 'metallic'
+		}
+		static getUniform(val: _Material.AttributeNames): string {
+			return Material.items[val]
+		}
+	}
 
-type LightUniformsT = {
-	[key: string]: LightUniformT,
-	'point': LightUniformT
-}
-
-const LightUniforms: LightUniformsT = {
-	'point': {
-		'name': 'point_lights',
-		'properties': {
-			'color': 'color',
+	export class Light {
+		static items: { [K in _Light.AttributeNames]: string } = {
 			'position': 'position',
+			'color': 'color',
+			'index': 'index',
 			'active': 'calculate_lighting'
+		}
+		static getUniform(val: _Light.AttributeNames): string {
+			return Light.items[val]
+		}
+	}
+
+	export class Core {
+		static items: { [K in _Shader.ShaderCoreUniformKinds]: string } = {
+			'model': 'model',
+			'view': 'view',
+			'projection': 'projection',
+			'camera_position': 'cam_position'
+		}
+		static getUniform(val: _Shader.ShaderCoreUniformKinds): string {
+			return Core.items[val]
 		}
 	}
 }
-
-type UniformMapT = {
-	'core': StringMappable,
-	'material': StringMappable,
-	'light': LightUniformsT,
-	'camera': StringMappable
-}
-
-const UniformMap: UniformMapT = {
-	'core': {
-		'model': 'model',
-		'view': 'view',
-		'projection': 'projection'
-	},
-	'material': {
-		'albedo': 'albedo',
-		'roughness': 'roughness',
-		'metallic': 'metallic'
-	},
-	'camera': {
-		'position': 'cam_position'
-	},
-	'light': LightUniforms
-}
-
-export { UniformMap }

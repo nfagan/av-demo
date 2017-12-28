@@ -14,6 +14,12 @@ class Resource {
 		return a.uuid === b.uuid
 	}
 
+	public static compareUUID(a: Resource, b: Resource): number {
+		if (a.uuid === b.uuid)
+			return 0
+		return 1
+	}
+
 }
 
 export { Resource }

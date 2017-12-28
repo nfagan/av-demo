@@ -5,7 +5,7 @@ import { mat4, vec3, glMatrix } from 'gl-matrix'
 function getPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nLevels: number) {
 	let planeModels = []
 	for (let i: number = 0; i < nLevels; i++) {
-		let planeModel: wgl.Model = new wgl.Model(gl, ref.mesh, ref.program)
+		let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material)
 		planeModel.setPosition(vec3.fromValues(0, -i-1, 0))
 		planeModel.setRotation(vec3.fromValues(90, 0, 0))
 		planeModels.push(planeModel)
@@ -41,47 +41,33 @@ async function main() {
 	document.body.style.margin = '0'
 	document.body.style.position = 'fixed'
 
-	const canvas = document.createElement('canvas')
-	document.body.appendChild(canvas)
+	const canvas = new wgl.Canvas()
+	const canvasElement = canvas.element
 
-	const dpr: number = window.devicePixelRatio || 1
-	const canvasWidth = window.innerWidth
-	const canvasHeight = window.innerHeight
-
-	canvas.style.width = canvasWidth + 'px'
-	canvas.style.height = canvasHeight + 'px'
-	canvas.width = canvas.clientWidth * dpr
-	canvas.height = canvas.clientHeight * dpr
-
-	const gl: WebGLRenderingContext = canvas.getContext('webgl')
+	const gl: WebGLRenderingContext = canvasElement.getContext('webgl')
 
 	if (!gl) throw new Error('Unable to initialize GL context.')
 
 	const scene = new wgl.Scene(gl)
-	const renderer = new wgl.renderers.main(gl)
+	const renderer = new wgl.renderers.functional(gl)
+	const light = new wgl.Light.Lights.Point(gl)
+	const camera: wgl.Camera = new wgl.Camera()
 
-	renderer.setAspect(canvasWidth/canvasHeight)
+	renderer.setAspect(canvas.aspect)
 
 	const prog: wgl.ShaderProgram = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.PBR1)
-	const prog1: wgl.ShaderProgram = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.Basic)
-
-	prog.bind()
-
-	let camera: wgl.Camera = new wgl.Camera()
 
 	camera.setPosition(vec3.fromValues(0, 0, 1))
-	prog.setVec3f('point_lights[0].color', vec3.fromValues(1.0, 0.0, 0.0))
-	prog.setVec3f('point_lights[0].position', vec3.fromValues(0.0, 0.0, -1.0))
-	prog.setb('calculate_lighting', true)
+	light.setColor([0, 0, 0])
+	light.setPosition([0, 0, -1])
+	light.setActive(true)
 
-	const sphere: wgl.Mesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere)
-	const plane: wgl.Mesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.quad)
+	const sphere: wgl.Mesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere, {finalize: true})
+	const plane: wgl.Mesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.quad, {finalize: true})
+	const mat = new wgl.Material.Materials.Physical(gl)
 
-	sphere.finalize()
-	plane.finalize()
-
-	const planeModel = new wgl.Model(gl, plane, prog)
-	const sphereModel = new wgl.Model(gl, sphere, prog)
+	const planeModel = new wgl.Model(gl, prog, plane, mat)
+	const sphereModel = new wgl.Model(gl, prog, sphere, mat)
 
 	planeModel.setPosition(vec3.fromValues(0, -1, 0))
 	planeModel.setRotation(vec3.fromValues(90, 0, 0))
@@ -114,9 +100,9 @@ async function main() {
 	}
 
 	document.addEventListener('pointerlockchange', onLockChange, false)
-	canvas.onclick = () => {
-		if (canvas.requestPointerLock)
-			canvas.requestPointerLock()
+	canvasElement.onclick = () => {
+		if (canvasElement.requestPointerLock)
+			canvasElement.requestPointerLock()
 		player()
 	}
 
@@ -124,13 +110,15 @@ async function main() {
 	let planeModels = getPlaneModels(gl, planeModel, nLevels)
 
 	for (let model of planeModels) {
-		scene.addModel(model)
+		scene.add(model)
 	}
 
-	sphereModel.setPosition(vec3.fromValues(-5, -5, 0))
-	scene.addModel(sphereModel)
+	scene.add(light)
 
-	camera.setPosition(vec3.fromValues(13, 8, 12))
+	sphereModel.setPosition([-5, -5, 0])
+	scene.add(sphereModel)
+
+	camera.setPosition([13, 8, 12])
 	camera.setPitch(-53)
 	camera.setYaw(-508)
 
@@ -152,7 +140,8 @@ async function main() {
 		analyser.update()
 		let levels = analyser.getLevels()
 		for (let i: number = 0; i < planeModels.length; i++) {
-			planeModels[i].setColor(vec3.fromValues(levels[i], 0, 1-levels[i]))
+			// let mat = <wgl.Material.Materials.Physical>planeModels[i].material
+			mat.setAlbedo(vec3.fromValues(levels[i], 0, 1-levels[i]))
 		}
 
 		renderer.render(scene, camera)
