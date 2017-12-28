@@ -5,7 +5,7 @@ import { mat4, vec3, glMatrix } from 'gl-matrix'
 function getPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nLevels: number) {
 	let planeModels = []
 	for (let i: number = 0; i < nLevels; i++) {
-		let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material)
+		let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material.clone())
 		planeModel.setPosition(vec3.fromValues(0, -i-1, 0))
 		planeModel.setRotation(vec3.fromValues(90, 0, 0))
 		planeModels.push(planeModel)
@@ -58,8 +58,8 @@ async function main() {
 	const prog: wgl.ShaderProgram = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.PBR1)
 
 	camera.setPosition(vec3.fromValues(0, 0, 1))
-	light.setColor([0, 0, 0])
-	light.setPosition([0, 0, -1])
+	light.setColor([1, 1, 1])
+	light.setPosition([0, 0, -2])
 	light.setActive(true)
 
 	const sphere: wgl.Mesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere, {finalize: true})
@@ -140,8 +140,7 @@ async function main() {
 		analyser.update()
 		let levels = analyser.getLevels()
 		for (let i: number = 0; i < planeModels.length; i++) {
-			// let mat = <wgl.Material.Materials.Physical>planeModels[i].material
-			mat.setAlbedo(vec3.fromValues(levels[i], 0, 1-levels[i]))
+			planeModels[i].material.getAttribute('albedo').setValue([levels[i], 0, 1-levels[i]])
 		}
 
 		renderer.render(scene, camera)

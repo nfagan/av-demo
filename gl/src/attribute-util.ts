@@ -40,6 +40,10 @@ export class _AttributeMap<T extends _AttributeBase> {
 		return values
 	}
 
+	public has<X extends string>(key: X): boolean {
+		return this.items[key] !== undefined
+	}
+
 	public getOne<X extends string>(key: X): T {
 		let item = this.items[key]
 		if (item === undefined)
@@ -61,6 +65,10 @@ export abstract class Attributable<AtT extends _AttributeBase, MapT extends _Att
 		for (let attr of attrs) {
 			this.addAttribute(attr)
 		}
+	}
+
+	public hasAttribute(name: K): boolean {
+		return this.attributes.has(name)
 	}
 
 	public enumerateAttributes(): Array<AtT> {

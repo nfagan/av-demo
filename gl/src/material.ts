@@ -32,6 +32,18 @@ class Material extends attribute.Attributable<Attribute, MaterialAttributeMap, A
 		this.attributes = new MaterialAttributeMap()
 		this.gl = gl
 	}
+
+	clone(): Material {
+		let copy = new Material(this.gl)
+		for (let attr of this.enumerateAttributes()) {
+			if (!copy.hasAttribute(attr.name)) {
+				copy.addAttribute(new Attribute(attr.name, vector.cloneVec3Convertible(attr.value)))
+			} else {
+				copy.getAttribute(attr.name).setValue(vector.cloneVec3Convertible(attr.value))
+			}
+		}
+		return copy
+	}
 }
 
 namespace Materials {

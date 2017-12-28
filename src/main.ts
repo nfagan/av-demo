@@ -1,1 +1,1 @@
-import './debug-gl3.ts'
+import './debug-gl2.ts'
