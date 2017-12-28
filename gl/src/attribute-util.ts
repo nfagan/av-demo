@@ -8,13 +8,18 @@ abstract class _AttributeBase {
 	name: string
 }
 
+type _ValidatorT<T extends _AttributeBase, K> = (attr: T, value: K) => void
+
 export abstract class _Attribute<ST, GT, K extends string> extends _AttributeBase {
 	name: K
 	value: GT = null
 	isDirty: boolean = true
-	constructor(name: K, value: ST) {
+	validator: _ValidatorT<_Attribute<ST, GT, K>, ST>
+	constructor(name: K, value: ST, validator: _ValidatorT<_Attribute<ST, GT, K>, ST> = validators.Any) {
 		super()
 		this.name = name
+		this.setValidator(validator)
+		this.validate(value)
 		this.setValue(value)
 	}
 	getValue(): GT {
@@ -22,6 +27,24 @@ export abstract class _Attribute<ST, GT, K extends string> extends _AttributeBas
 		return this.value
 	}
 	abstract setValue(value: ST): void
+	setValidator(validator: _ValidatorT<_Attribute<ST, GT, K>, ST>): void {
+		this.validator = validator
+	}
+	validate(value: ST): void {
+		if (this.validator) this.validator(this, value)
+	}
+}
+
+export namespace validators {
+	export function Any<ST, GT, K extends string>(attr: _Attribute<ST, GT, K>, data: ST) {}
+	export function Number<ST, GT, K extends string>(attr: _Attribute<ST, GT, K>, data: ST) {
+		if (typeof(data) !== 'number')
+			throw new Error(`Attribute "${attr.name}" must be a number.`)
+	}
+	export function Boolean<ST, GT, K extends string>(attr: _Attribute<ST, GT, K>, data: ST) {
+		if (typeof(data) !== 'boolean')
+			throw new Error(`Attribute "${attr.name}" must be a boolean.`)
+	}
 }
 
 export class _AttributeMap<T extends _AttributeBase> {

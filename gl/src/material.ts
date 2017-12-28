@@ -2,15 +2,17 @@ import { vec3 } from 'gl-matrix'
 import { types, vector, attribute } from './util'
 
 type AttributeNames = 'roughness' | 'albedo' | 'metallic'
-type SetAttributeT = number | types.isVec3Convertible
-type GetAttributeT = number | vec3
+type ValidatorT = (attr: Attribute, data: SetT) => void
+type SetT = number | types.isVec3Convertible
+type GetT = number | vec3
 
-class Attribute extends attribute._Attribute<SetAttributeT, GetAttributeT, AttributeNames> {
-	constructor(name: AttributeNames, value: SetAttributeT) {
-		super(name, value)
+class Attribute extends attribute._Attribute<SetT, GetT, AttributeNames> {
+	constructor(name: AttributeNames, value: SetT, validator: ValidatorT = attribute.validators.Any) {
+		super(name, value, validator)
 		this.setValue(value)
 	}
-	setValue(value: SetAttributeT): void {
+	setValue(value: SetT): void {
+		this.validate(value)
 		if (typeof(value) != 'number')
 			value = vector.requireVec3(value)
 		this.value = value
@@ -37,7 +39,7 @@ class Material extends attribute.Attributable<Attribute, MaterialAttributeMap, A
 		let copy = new Material(this.gl)
 		for (let attr of this.enumerateAttributes()) {
 			if (!copy.hasAttribute(attr.name)) {
-				copy.addAttribute(new Attribute(attr.name, vector.cloneVec3Convertible(attr.value)))
+				copy.addAttribute(new Attribute(attr.name, vector.cloneVec3Convertible(attr.value), attr.validator))
 			} else {
 				copy.getAttribute(attr.name).setValue(vector.cloneVec3Convertible(attr.value))
 			}
@@ -53,9 +55,9 @@ namespace Materials {
 				_roughness: number = 0.1,
 				_metallic: number = 0.1) {
 			super(gl)
-			this.addAttribute(new Attribute('albedo', _albedo))
-			this.addAttribute(new Attribute('metallic', _metallic))
-			this.addAttribute(new Attribute('roughness', _roughness))
+			this.addAttribute(new Attribute('albedo', _albedo, attribute.validators.Any))
+			this.addAttribute(new Attribute('metallic', _metallic, attribute.validators.Number))
+			this.addAttribute(new Attribute('roughness', _roughness, attribute.validators.Number))
 		}
 		public setAlbedo(val: types.isVec3Convertible) {
 			this.getAttribute('albedo').setValue(val)

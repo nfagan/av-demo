@@ -3,15 +3,17 @@ import { vector, types, attribute } from './util'
 import { Resource } from './resource'
 
 type AttributeNames = 'color' | 'position' | 'index' | 'active'
-type SetAttributeT = types.isVec3Convertible | number | boolean
-type GetAttributeT = SetAttributeT
+type ValidatorT = (attr: Attribute, data: SetT) => void
+type SetT = types.isVec3Convertible | number | boolean
+type GetT = SetT
 
-class Attribute extends attribute._Attribute<SetAttributeT, GetAttributeT, AttributeNames> {
-	constructor(name: AttributeNames, value: SetAttributeT) {
+class Attribute extends attribute._Attribute<SetT, GetT, AttributeNames> {
+	constructor(name: AttributeNames, value: SetT, validator: ValidatorT = attribute.validators.Any) {
 		super(name, value)
 		this.setValue(value)
 	}
-	setValue(value: SetAttributeT): void {
+	setValue(value: SetT): void {
+		this.validate(value)
 		if (typeof(value) !== 'number' && typeof(value) !== 'boolean')
 			value = vector.requireVec3(value)
 		this.value = value
@@ -36,9 +38,9 @@ class Light extends attribute.Attributable<Attribute, LightAttributeMap, Attribu
 		super()
 		this.gl = gl
 		this.attributes = new LightAttributeMap()
-		this.addAttribute(new Attribute('active', _active))
-		this.addAttribute(new Attribute('index', _index))
-		this.addAttribute(new Attribute('color', _color))
+		this.addAttribute(new Attribute('active', _active, attribute.validators.Boolean))
+		this.addAttribute(new Attribute('index', _index, attribute.validators.Number))
+		this.addAttribute(new Attribute('color', _color, attribute.validators.Any))
 	}
 	public setColor(val: types.isVec3Convertible): void {
 		this.getAttribute('color').setValue(val)

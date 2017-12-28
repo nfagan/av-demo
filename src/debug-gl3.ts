@@ -141,6 +141,7 @@ async function main() {
 		let levels = analyser.getLevels()
 		for (let i: number = 0; i < planeModels.length; i++) {
 			planeModels[i].material.getAttribute('albedo').setValue([levels[i], 0, 1-levels[i]])
+			// planeModels[i].material.getAttribute('roughness').setValue([levels[i], 0, 1-levels[i]])
 		}
 
 		renderer.render(scene, camera)
