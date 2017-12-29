@@ -41,7 +41,7 @@ class Camera {
 		return view
 	}
 
-	public setPosition(position: types.isVec3Convertible) {
+	public setPosition(position: types.vec3Convertible) {
 		this.position = vector.requireVec3(position)
 	}
 

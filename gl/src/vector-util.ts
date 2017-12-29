@@ -13,7 +13,7 @@ export function requireVec3(val: glm.vec3 | Array<number> | number): glm.vec3 {
 	return val
 }
 
-export function cloneVec3Convertible(data: types.isVec3Convertible): types.isVec3Convertible {
+export function cloneVec3Convertible(data: types.vec3Convertible): types.vec3Convertible {
 	if (typeof(data) == 'number') {
 		return data
 	} else if (Array.isArray(data)) {

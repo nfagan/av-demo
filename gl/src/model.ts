@@ -28,17 +28,29 @@ class Model extends Resource {
 		this.scale = vec3.fromValues(1, 1, 1)
 	}
 
-	public setPosition(pos: types.isVec3Convertible): void {
+	public setMesh(mesh: Mesh): void { 
+		this.mesh = mesh 
+	}
+	
+	public setMaterial(material: Material.Material): void { 
+		this.material = material 
+	}
+
+	public setPosition(pos: types.vec3Convertible): void {
 		this.position = vector.requireVec3(pos)
 	}
 
-	public setRotation(rot: types.isVec3Convertible): void {
+	public setRotation(rot: types.vec3Convertible): void {
 		this.rotation = vector.requireVec3(rot)
 	}
 
-	public setScale(scale: types.isVec3Convertible): void {
+	public setScale(scale: types.vec3Convertible): void {
 		this.scale = vector.requireVec3(scale)
 	}
+
+	public getPosition(): vec3 { return this.position }
+	public getRotation(): vec3 { return this.rotation }
+	public getScale(): vec3 { return this.scale }
 
 	public bind(): void {
 		this.mesh.bind(this.program)

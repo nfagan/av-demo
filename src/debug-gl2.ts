@@ -52,7 +52,7 @@ function updateStats(dt: number) {
 	fpsStats.el.innerHTML = fpsStats.stats.getString()
 }
 
-async function main() {
+export async function main() {
 
 	//	audio init
 
@@ -99,9 +99,9 @@ async function main() {
 
 	renderer.setAspect(canvas.aspect)
 
-	const firstLight = new wgl.Light.Lights.Point(gl)
+	const firstLight = wgl.Light.Light.Point(gl)
 	firstLight.setColor([1, 0, 0])
-	firstLight.setPosition([0, 0, -1])
+	firstLight.getAttribute('position').setValue([0, 0, -1])
 
 	let planeModel = new wgl.util.matrix.transform()
 		.translate([0, -1, 0])
@@ -115,7 +115,7 @@ async function main() {
 		.mat()
 
 	let lightModel = new wgl.util.matrix.transform()
-		.translate(firstLight.getPosition())
+		.translate(<vec3>firstLight.getAttribute('position').getValue())
 		.mat()
 
 	const meshCreateOpts = { finalize: true }
@@ -123,8 +123,8 @@ async function main() {
 	const plane = wgl.MeshFactory.create(gl, wgl.MeshTypes.quad, meshCreateOpts)
 	const lightMesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere, meshCreateOpts)
 
-	let planeMaterial = new wgl.Material.Materials.Physical(gl, [0.5, 1.0, 0.0], 0.4, 0.2)
-	let lightSphereMaterial = new wgl.Material.Materials.Physical(gl, [1, 1, 1], 0.4, 0.2)
+	let planeMaterial = wgl.Material.Material.Physical(gl, [0.5, 1.0, 0.0], 0.4, 0.2)
+	let lightSphereMaterial = wgl.Material.Material.Physical(gl, [1, 1, 1], 0.4, 0.2)
 
 	renderer.configureTransform(prog, sphereModel)
 
@@ -239,5 +239,3 @@ async function main() {
 
 	animate()
 }
-
-main()

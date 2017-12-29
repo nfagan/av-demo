@@ -13,19 +13,19 @@ export class transform {
 		}
 	}
 
-	public translate(val: types.isVec3Convertible): transform {
+	public translate(val: types.vec3Convertible): transform {
 		val = vector.requireVec3(val)
 		glm.mat4.translate(this.data, this.data, val)
 		return this
 	}
 
-	public rotate(rad: number, axis: types.isVec3Convertible): transform {
+	public rotate(rad: number, axis: types.vec3Convertible): transform {
 		axis = vector.requireVec3(axis)
 		glm.mat4.rotate(this.data, this.data, rad, axis)
 		return this
 	}
 
-	public scale(val: types.isVec3Convertible): transform {
+	public scale(val: types.vec3Convertible): transform {
 		val = vector.requireVec3(val)
 		glm.mat4.scale(this.data, this.data, val)
 		return this

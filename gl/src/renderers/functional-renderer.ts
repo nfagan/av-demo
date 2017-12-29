@@ -22,10 +22,7 @@ export default class extends base {
 		this.clear()
 
 		if (scene.models.length === 0) return
-
-		if (!scene.modelsSorted) {
-			scene.sortModels(Model.compareMeshUUID)
-		}
+		if (!scene.modelsSorted) scene.sortModels(Model.compareMeshUUID)
 
 		this.configureCamera(scene.models[0].program, camera)
 
@@ -82,7 +79,7 @@ export default class extends base {
 			if (attr.name === 'index' || attr.name === 'active') continue
 			if (attr.isDirty) {
 				let un = Maps.Light.getUniform(attr.name)
-				let unf = `${light.name}[${index}].${un}`
+				let unf = `${light.getName()}[${index}].${un}`
 				prog.setUniform(unf, attr.getValue())
 			}
 		}
@@ -98,12 +95,8 @@ export default class extends base {
 		let isNullLastMesh: boolean = this.lastMesh == null
 		let isNewMesh: boolean = isNullLastMesh || !Mesh.equals(mesh, this.lastMesh)
 		if (isNewMesh) {
-			if (!isNullLastMesh && this.lastMesh.isBound()) {
-				this.lastMesh.unbind()
-			}
-			if (!mesh.isBound()) {
-				mesh.bind(prog)
-			}
+			if (!isNullLastMesh && this.lastMesh.isBound()) this.lastMesh.unbind()
+			if (!mesh.isBound()) mesh.bind(prog)
 		}
 		this.lastMesh = mesh
 		return isNewMesh
@@ -113,12 +106,8 @@ export default class extends base {
 		let isNullLastProgram: boolean = this.lastProgram == null
 		let isNewProgram: boolean = isNullLastProgram || !Shader.ShaderProgram.equals(prog, this.lastProgram)
 		if (isNewProgram) {
-			if (!isNullLastProgram && this.lastProgram.isBound()) {
-				this.lastProgram.unbind()
-			}
-			if (!prog.isBound()) {
-				prog.bind()
-			}
+			if (!isNullLastProgram && this.lastProgram.isBound()) this.lastProgram.unbind()
+			if (!prog.isBound()) prog.bind()
 		}
 		this.lastProgram = prog
 		return isNewProgram
