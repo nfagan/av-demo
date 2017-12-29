@@ -8,7 +8,7 @@ const sendFileOr404 = (res, filename) => {
 			res.sendFile(filename, {root: __dirname})
 			return
 		}
-		res.status(404).send(`Resource ${filename} not found.`)
+		res.status(404).send(`Resource "${filename}" not found.`)
 	})
 }
 
@@ -26,4 +26,4 @@ app.get('/js/:script', (req, res) => {
 	sendFileOr404(res, script)
 })
 
-app.listen(3000, () => console.log('Listening on 3000'))
+app.listen(process.env.PORT || 3000, () => console.log('Listening ...'))
