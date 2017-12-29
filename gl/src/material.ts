@@ -7,10 +7,6 @@ type SetT = number | types.vec3Convertible
 type GetT = number | vec3
 
 class Attribute extends attribute._Attribute<SetT, GetT, AttributeNames> {
-	constructor(name: AttributeNames, value: SetT, validator: ValidatorT = attribute.validators.Any) {
-		super(name, value, validator)
-		this.setValue(value)
-	}
 	_setValue(value: SetT): GetT {
 		if (typeof(value) != 'number')
 			value = vector.requireVec3(value)

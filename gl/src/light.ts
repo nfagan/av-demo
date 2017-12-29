@@ -9,10 +9,6 @@ type SetT = types.vec3Convertible | number | boolean
 type GetT = vec3 | number | boolean
 
 class Attribute extends attribute._Attribute<SetT, GetT, AttributeNames> {
-	constructor(name: AttributeNames, value: SetT, validator: ValidatorT = attribute.validators.Any) {
-		super(name, value)
-		this.setValue(value)
-	}
 	_setValue(value: SetT): GetT {
 		if (typeof(value) !== 'number' && typeof(value) !== 'boolean')
 			value = vector.requireVec3(value)
