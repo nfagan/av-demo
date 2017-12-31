@@ -118,7 +118,7 @@ export async function main() {
 
 	if (!gl) throw new Error('Unable to initialize GL context.')
 
-	let firstObj = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/stall:stall.obj')
+	let firstObj = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/lp_tree:lowpolytree.obj')
 	firstObj.finalize()
 
 	initStats()
@@ -137,22 +137,24 @@ export async function main() {
 	camera.setPosition(vec3.fromValues(0, 0, 1))
 	light.setColor([1, 1, 1])
 	light.getAttribute('position').setValue([0, 0, -2])
-	light.setActive(true)
 
 	light2.setColor([0, 0, 1])
 	light2.getAttribute('position').setValue([-5, -5, -5])
-	light2.setActive(true)
 	light2.setIndex(1)
 
-	const sphere = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere, {finalize: true})
-	const plane = wgl.MeshFactory.create(gl, wgl.MeshTypes.quad, {finalize: true})
-	const cubeMesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.cube, {finalize: true})
+	const sphere = wgl.MeshFactory.create(gl, 'sphere', {finalize: true})
+	const plane = wgl.MeshFactory.create(gl, 'quad', {finalize: true})
+	const cubeMesh = wgl.MeshFactory.create(gl, 'cube', {finalize: true})
 	const mat = wgl.Material.Material.Physical(gl)
 
 	const planeModel = new wgl.Model(gl, prog, plane, mat)
 	const sphereModel = new wgl.Model(gl, prog, sphere, mat)
 	const cottageModel = new wgl.Model(gl, prog, firstObj, mat)
 	const bigSphere = new wgl.Model(gl, prog, sphere, mat)
+
+	cottageModel.setPosition([-5, -5, -5])
+
+	scene.add(cottageModel)
 
 	bigSphere.setPosition([0, 0, 0])
 	bigSphere.setScale(5)

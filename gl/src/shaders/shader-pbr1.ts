@@ -40,7 +40,8 @@ namespace _sources {
 		     vec3 cam_position,
 		     vec3 world_position,
 		     vec3 light_position,
-		     vec3 light_color) {
+		     vec3 light_color,
+		     bool is_directional) {
 		    
 		    vec3 F0 = vec3(0.04);
 		    F0 = mix(F0, albedo, metallic);
@@ -48,15 +49,22 @@ namespace _sources {
 		    vec3 N = normalize(normals);
 		    vec3 V = normalize(cam_position - world_position);
 		    
-		    vec3 L = normalize(light_position - world_position);
+		    vec3 L;
+
+		    if (!is_directional) {
+		    	L = normalize(light_position - world_position);
+		    } else {
+		    	L = normalize(-light_position);
+		    }
+
 		    vec3 H = normalize(V + L);
+
+		    float attenuation = 1.0;
 		    
-		    //
-		    //  one light
-		    //
-		    
-		    float distance = length(light_position - world_position);
-		    float attenuation = 1.0 / (distance * distance * 0.0002);
+		    if (!is_directional) {
+		    	float distance = length(light_position - world_position);
+		    	attenuation = 1.0 / (distance * distance * 0.0002);
+		    }
 		    
 		    vec3 radiance = light_color * attenuation;
 		    
@@ -134,13 +142,20 @@ namespace _sources {
 		struct PointLight {
 			vec3 position;
 			vec3 color;
+			vec3 mask;
+		};
+
+		struct DirectionalLight {
+			vec3 direction;
+			vec3 color;
+			vec3 mask;
 		};
 
 		const int n_point_lights = 2;
+		const int n_directional_lights = 1;
 
 		uniform PointLight point_lights[n_point_lights];
-
-		uniform bool calculate_lighting;
+		uniform DirectionalLight directional_lights[n_directional_lights];
 
 		uniform vec3 cam_position;
 
@@ -156,22 +171,32 @@ namespace _sources {
 
 			vec3 final_color = albedo;
 
+			vec3 Lo = vec3(0.0);
+
 			//	point lights
-			if (calculate_lighting) {
 
-				vec3 Lo = vec3(0.0);
-
-				for (int i = 0; i < n_point_lights; i++) {
-					Lo += PBR(v_normal, albedo, roughness, metallic, 
-						cam_position, v_position, point_lights[i].position, point_lights[i].color);
-				}
-
-				vec3 ambient = vec3(0.03) * albedo;
-
-			    final_color = ambient + Lo;
-			    final_color = final_color / (final_color + vec3(1.0));
-			    final_color = pow(final_color, vec3(1.0/2.2));
+			for (int i = 0; i < n_point_lights; i++) {
+				bool is_directional = false;
+				vec3 res = PBR(v_normal, albedo, roughness, metallic, 
+					cam_position, v_position, point_lights[i].position, point_lights[i].color, is_directional);
+				res *= point_lights[i].mask;
+				Lo += res;
 			}
+
+			//	directional lights
+
+			for (int i = 0; i < n_directional_lights; i++) {
+				bool is_directional = true;
+				vec3 res = PBR(v_normal, albedo, roughness, metallic, 
+					cam_position, v_position, directional_lights[i].direction, directional_lights[i].color, is_directional);
+				Lo += res;
+			}
+
+			vec3 ambient = vec3(0.03) * albedo;
+
+		    final_color = ambient + Lo;
+		    final_color = final_color / (final_color + vec3(1.0));
+		    final_color = pow(final_color, vec3(1.0/2.2));
 
       		gl_FragColor = vec4(final_color, 1.0);
     	}
@@ -189,7 +214,7 @@ const PBR1: ShaderProgramSource = {
 			type: ShaderTypes.FRAGMENT,
 		}
 	],
-	uniforms: ['model', 'projection', 'view', 'color']
+	uniforms: ['model', 'projection', 'view']
 }
 
 export { PBR1 }

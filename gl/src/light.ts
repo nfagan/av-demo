@@ -2,8 +2,10 @@ import { vec3 } from 'gl-matrix'
 import { vector, types, attribute } from './util'
 import { Resource } from './resource'
 
-type AttributeNames = 'color' | 'position' | 'index' | 'active'
-type LightNames = 'point_lights'
+type AttributeNames = 'color' | 'position' | 'index' | 'mask' | 'direction'
+type LightNames = 'point' | 'directional'
+type LightUniformNames = AttributeNames | LightNames
+
 type ValidatorT = (attr: Attribute, data: SetT) => void
 type SetT = types.vec3Convertible | number | boolean
 type GetT = vec3 | number | boolean
@@ -21,17 +23,21 @@ class LightAttributeMap extends attribute._AttributeMap<Attribute> { constructor
 class Light extends attribute.Attributable<Attribute, LightAttributeMap, AttributeNames> {
 	gl: WebGLRenderingContext
 	private name: LightNames
+	public active: boolean = true
 
 	constructor(gl: WebGLRenderingContext, 
-			_index: number = 0, 
-			_active: boolean = true, 
-			_color: types.vec3Convertible = [1, 1, 1]) {
+			_index: number = 0,  
+			_color: types.vec3Convertible = [1, 1, 1],
+			_mask: types.vec3Convertible = [1, 1, 1]) {
 		super()
 		this.gl = gl
 		this.attributes = new LightAttributeMap()
-		this.addAttribute(new Attribute('active', _active, attribute.validators.Boolean))
 		this.addAttribute(new Attribute('index', _index, attribute.validators.Number))
 		this.addAttribute(new Attribute('color', _color, attribute.validators.Vec3))
+		this.addAttribute(new Attribute('mask', _mask, attribute.validators.Vec3))
+	}
+	public setMask(val: types.vec3Convertible): void {
+		this.getAttribute('mask').setValue(val)
 	}
 	public setColor(val: types.vec3Convertible): void {
 		this.getAttribute('color').setValue(val)
@@ -39,20 +45,17 @@ class Light extends attribute.Attributable<Attribute, LightAttributeMap, Attribu
 	public setIndex(val: number): void {
 		this.getAttribute('index').setValue(val)
 	}
-	public setActive(val: boolean): void {
-		this.getAttribute('active').setValue(val)
-	}
-	public getActive(): boolean {
-		return <boolean>this.getAttribute('active').getValue()
-	}
 	public getIndex(): number {
-		return <number>this.getAttribute('index').getValue()
+		return <number>this.getAttribute('index').peekValue()
 	}
 	public getColor(): vec3 {
-		return <vec3>this.getAttribute('color').getValue()
+		return <vec3>this.getAttribute('color').peekValue()
 	}
-	public getName(): string {
+	public getName(): LightNames {
 		return this.name
+	}
+	public getMask(): vec3 {
+		return <vec3>this.getAttribute('mask').peekValue()
 	}
 
 	clone(): Light {
@@ -62,13 +65,22 @@ class Light extends attribute.Attributable<Attribute, LightAttributeMap, Attribu
 	public static Point(gl: WebGLRenderingContext, 
 				_position: types.vec3Convertible = [1, 1, 1], 
 				_color: types.vec3Convertible = [1, 1, 1],
-				_active: boolean = true,
 				_index: number = 0) {
-		let light = new Light(gl, _index, _active, _color)
+		let light = new Light(gl, _index, _color)
 		light.addAttribute(new Attribute('position', _position))
-		light.name = 'point_lights'
+		light.name = 'point'
+		return light
+	}
+
+	public static Directional(gl: WebGLRenderingContext,
+			_direction: types.vec3Convertible = [1, 1, 1],
+			_color: types.vec3Convertible = [1, 1, 1],
+			_index: number = 0) {
+		let light = new Light(gl, _index, _color)
+		light.addAttribute(new Attribute('direction', _direction))
+		light.name = 'directional'
 		return light
 	}
 }
 
-export { Light, LightNames, Attribute, AttributeNames }
+export { Light, LightNames, Attribute, AttributeNames, LightUniformNames }

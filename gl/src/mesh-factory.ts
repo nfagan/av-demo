@@ -5,12 +5,7 @@ import * as math from './wgl-math'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Creating_3D_objects_using_WebGL
 
-enum MeshTypes {
-    quad,
-    triangle,
-    sphere,
-    cube
-}
+type MeshTypes = 'quad' | 'triangle' | 'sphere' | 'cube'
 
 type MeshCreateOptions = {
     finalize: boolean
@@ -34,16 +29,16 @@ class MeshFactory {
 
         let mesh: Mesh = new Mesh(gl)
         switch (kind) {
-            case MeshTypes.quad:
+            case 'quad':
                 MeshFactory.makeQuad(mesh)
                 break
-            case MeshTypes.triangle:
+            case 'triangle':
                 MeshFactory.makeTriangle(mesh)
                 break
-            case MeshTypes.sphere:
+            case 'sphere':
                 MeshFactory.makeSphere(mesh, opts.vertexCount)
                 break
-            case MeshTypes.cube:
+            case 'cube':
                 MeshFactory.makeCube(mesh)
                 break
         }

@@ -13,6 +13,7 @@ export default class extends base {
 
 	lastMesh: Mesh = null
 	lastProgram: Shader.ShaderProgram = null
+	lastMaterial: Material.Material = null
 
 	constructor(gl: WebGLRenderingContext) {
 		super(gl)
@@ -25,6 +26,7 @@ export default class extends base {
 		if (!scene.modelsSorted) scene.sortModels(Model.compareMeshUUID)
 
 		this.configureCamera(scene.models[0].program, camera)
+		this.configureLights(scene.models[0].program, scene.lights)
 
 		for (let model of scene.models) {
 			const prog = model.program
@@ -60,9 +62,10 @@ export default class extends base {
 
 	public configureMaterial(prog: Shader.ShaderProgram, material: Material.Material): void {
 		this.conditionalBindProgram(prog)
+		let isNew = this.checkNewMaterial(material)
 		let attrs: Array<Material.Attribute> = material.enumerateAttributes()
 		for (let attr of attrs) {
-			if (attr.isDirty) {
+			if (isNew || attr.isDirty) {
 				prog.setUniform(Maps.Material.getUniform(attr.name), attr.getValue())
 			}
 		}
@@ -70,16 +73,17 @@ export default class extends base {
 
 	public configureLight(prog: Shader.ShaderProgram, light: Light.Light): void {
 		this.conditionalBindProgram(prog)
-		let active = light.getActive()
+		let active: boolean = light.active
 		let index = light.getIndex()
 		let attrs: Array<Light.Attribute> = light.enumerateAttributes()
-		prog.setUniform(Maps.Light.getUniform('active'), active)
 		if (!active) return
 		for (let attr of attrs) {
-			if (attr.name === 'index' || attr.name === 'active') continue
+			if (attr.name === 'index') continue
 			if (attr.isDirty) {
 				let un = Maps.Light.getUniform(attr.name)
-				let unf = `${light.getName()}[${index}].${un}`
+				let mappedName = Maps.Light.getUniform(light.getName())
+				let unf = `${mappedName}[${index}].${un}`
+				console.log(`updating ... ${unf}`)
 				prog.setUniform(unf, attr.getValue())
 			}
 		}
@@ -89,6 +93,14 @@ export default class extends base {
 		for (let light of lights) {
 			this.configureLight(prog, light)
 		}
+	}
+
+	private checkNewMaterial(material: Material.Material): boolean {
+		let isNullLastMaterial: boolean = this.lastMaterial === null
+		let isNewMaterial: boolean = isNullLastMaterial || 
+			!Material.Material.equals(material, this.lastMaterial)
+		this.lastMaterial = material
+		return isNewMaterial
 	}
 
 	private conditionalBindMesh(prog: Shader.ShaderProgram, mesh: Mesh): boolean {

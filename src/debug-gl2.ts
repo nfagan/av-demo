@@ -119,9 +119,9 @@ export async function main() {
 		.mat()
 
 	const meshCreateOpts = { finalize: true }
-	const oscillatingSphere = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere, meshCreateOpts)
-	const plane = wgl.MeshFactory.create(gl, wgl.MeshTypes.quad, meshCreateOpts)
-	const lightMesh = wgl.MeshFactory.create(gl, wgl.MeshTypes.sphere, meshCreateOpts)
+	const oscillatingSphere = wgl.MeshFactory.create(gl, 'sphere', meshCreateOpts)
+	const plane = wgl.MeshFactory.create(gl, 'quad', meshCreateOpts)
+	const lightMesh = wgl.MeshFactory.create(gl, 'sphere', meshCreateOpts)
 
 	let planeMaterial = wgl.Material.Material.Physical(gl, [0.5, 1.0, 0.0], 0.4, 0.2)
 	let lightSphereMaterial = wgl.Material.Material.Physical(gl, [1, 1, 1], 0.4, 0.2)
@@ -206,8 +206,6 @@ export async function main() {
 
 		// let attr = planeMaterial.setRoughness(0.1)
 
-		firstLight.setActive(true)
-
 		for (let i: number = 0; i < planeModels.length; i++) {
 			let displacement = wave[i] * .1
 			mat4.translate(planeModelCopies[i], planeModels[i], [0, displacement, 0])
@@ -227,7 +225,7 @@ export async function main() {
 		renderer.draw(prog, oscillatingSphere)
 
 		if (DEBUG.drawLightSpheres) {
-			firstLight.setActive(false)
+			firstLight.setMask([0, 0, 0])
 			renderer.configureLight(prog, firstLight)
 			renderer.configureMaterial(prog, lightSphereMaterial)
 			renderer.configureTransform(prog, lightModel)

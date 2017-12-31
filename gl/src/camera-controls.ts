@@ -8,31 +8,29 @@ import { common, matrix } from './util'
 
 export namespace Orbit {
 
-	type OrbitTouchOpts = {
+	type OrbitOpts = {
 		nVelocitySamples: number,
 		velocityDecaySensitivity: number
 	}
 
-	export class Touch {
+	abstract class _Orbit<T extends XY.XYEvent, X extends XY.xy<T>> {
 
+		private input: X
 		private timer: DeltaTimer
-		private touch: XY.Touch
-		private camera: Camera
 
-		private began: boolean
-		private released: boolean
-		private velocities: Array<vec2>
-		private velocity: vec2
-		private nVelocitySamples: number
-		private meanVelocity: vec2
-		private coordinates: vec2
-		private deltas: vec2
-		private velocityDecaySensitivity: number
+		began: boolean
+		released: boolean
+		velocities: Array<vec2>
+		velocity: vec2
+		nVelocitySamples: number
+		meanVelocity: vec2
+		coordinates: vec2
+		deltas: vec2
+		velocityDecaySensitivity: number
 
-		constructor(touch: XY.Touch, camera: Camera, opts: OrbitTouchOpts = Touch.Defaults()) {
-			this.timer = new DeltaTimer()
-			this.touch = touch
-			this.camera = camera
+		constructor(input: X, timer: DeltaTimer, opts: OrbitOpts) {
+			this.input = input
+			this.timer = timer
 
 			this.began = false
 			this.released = false
@@ -47,36 +45,20 @@ export namespace Orbit {
 			this.setup()
 		}
 
-		public update(): void {
-			const deltas = this.deltas
-			const camera = this.camera
-			const ratio = this.timer.getRatio()
-			const decaySens = this.velocityDecaySensitivity
-
-			if (!this.released) {
-				camera.rotate(-deltas[0], deltas[1])
-			} else {
-				let vel = this.meanVelocity
-				let xvel = (vel[0] * ratio.second) / ratio.first
-				let yvel = (vel[1] * ratio.second) / ratio.first
-				camera.rotate(-xvel, yvel)
-				vel[0] /= decaySens
-				vel[1] /= decaySens
-				if (Math.abs(vel[0]) < 0.00001) vel[0] = 0
-				if (Math.abs(vel[1]) < 0.00001) vel[1] = 0
-			}
-		}
+		protected abstract shouldBegin(evt: T): boolean
+		protected abstract getCoordinates(evt: T): vec2
+		public abstract shouldInvert(): boolean
 
 		private setup(): void {
-			const touch = this.touch
+			const input = this.input
 			const self = this
 
-			touch.start(evt => {
-				if (self.began || evt.touches.length !== 1)
+			input.start((evt: T) => {
+				if (self.began || !self.shouldBegin(evt))
 					return
-				let touch0 = evt.touches[0]
-				self.coordinates[0] = touch0.clientX
-				self.coordinates[1] = touch0.clientY
+				let coords = self.getCoordinates(evt)
+				self.coordinates[0] = coords[0]
+				self.coordinates[1] = coords[1]
 				self.timer.update()
 				self.began = true
 				self.released = false
@@ -85,11 +67,10 @@ export namespace Orbit {
 				self.velocities = []
 			})
 
-			touch.move(evt => {
+			input.move((evt: T) => {
 				evt.preventDefault()
 				self.timer.update()
-				let touch0 = evt.touches[0]
-				let currentCoordinates = vec2.fromValues(touch0.clientX, touch0.clientY)
+				let currentCoordinates = self.getCoordinates(evt)
 				self.deltas = vec2.subtract(self.deltas, currentCoordinates, self.coordinates)
 				let deltaT = self.timer.delta()
 				if (deltaT > 0) {
@@ -110,19 +91,103 @@ export namespace Orbit {
 				self.coordinates = currentCoordinates
 			})
 
-			touch.end(evt => {
+			input.end((evt: T) => {
 				self.released = true
 				self.began = false
 			})
 		}
 
-		public static Defaults(): OrbitTouchOpts {
+		public static Defaults(): OrbitOpts {
 			return {
 				nVelocitySamples: 100,
 				velocityDecaySensitivity: 1.1
 			}
 		}
+	}
 
+	class OrbitMouse extends _Orbit<MouseEvent, XY.Mouse> {
+		protected getCoordinates(evt: MouseEvent): vec2 {
+			return vec2.fromValues(evt.clientX, evt.clientY)
+		}
+		protected shouldBegin(evt: MouseEvent): boolean {
+			return true
+		}
+		public shouldInvert(): boolean {
+			return false
+		}
+	}
+
+	class OrbitTouch extends _Orbit<TouchEvent, XY.Touch> {
+		protected getCoordinates(evt: TouchEvent): vec2 {
+			if (evt.touches.length === 0)
+				throw new Error('Attempted to get coordinates when there were 0 touch-points.')
+			let touch0 = evt.touches[0]
+			return vec2.fromValues(touch0.clientX, touch0.clientY)
+		}
+		protected shouldBegin(evt: TouchEvent): boolean {
+			return evt.touches.length === 1
+		}
+		public shouldInvert(): boolean {
+			return true
+		}
+	}
+
+	export class Orbit {
+
+		private input: XY.Mouse | XY.Touch
+		private camera: Camera
+		private orbit: OrbitMouse | OrbitTouch
+		private timer: DeltaTimer
+
+		constructor(input: XY.Mouse | XY.Touch, camera: Camera, opts: OrbitOpts = _Orbit.Defaults()) {
+			this.input = input
+			this.camera = camera
+			this.timer = new DeltaTimer()
+			if (input instanceof XY.Mouse) {
+				this.orbit = new OrbitMouse(input, this.timer, opts)
+			} else if (input instanceof XY.Touch) {
+				this.orbit = new OrbitTouch(input, this.timer, opts)
+			}
+		}
+
+		public update(): void {
+			const orbit = this.orbit
+			const deltas = orbit.deltas
+			const camera = this.camera
+			const ratio = this.timer.getRatio()
+			const decaySens = this.orbit.velocityDecaySensitivity
+
+			if (!orbit.released) {
+				if (orbit.shouldInvert()) {
+					camera.rotate(-deltas[0], deltas[1])
+				} else {
+					camera.rotate(deltas[0], -deltas[1])
+				}
+				deltas[0] = 0
+				deltas[1] = 0
+			} else {
+				let vel = orbit.meanVelocity
+				let xvel = (vel[0] * ratio.second) / ratio.first
+				let yvel = (vel[1] * ratio.second) / ratio.first
+				if (orbit.shouldInvert()) {
+					camera.rotate(-xvel, yvel)
+				} else {
+					camera.rotate(xvel, -yvel)
+				}
+				vel[0] /= decaySens
+				vel[1] /= decaySens
+				if (Math.abs(vel[0]) < 0.00001) vel[0] = 0
+				if (Math.abs(vel[1]) < 0.00001) vel[1] = 0
+			}
+		}
+	}
+
+	export function Mouse(mouse: XY.Mouse, camera: Camera, opts: OrbitOpts = _Orbit.Defaults()): Orbit {
+		return new Orbit(mouse, camera, opts)
+	}
+
+	export function Touch(touch: XY.Touch, camera: Camera, opts: OrbitOpts = _Orbit.Defaults()): Orbit {
+		return new Orbit(touch, camera, opts)
 	}
 
 }

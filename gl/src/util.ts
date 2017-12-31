@@ -4,8 +4,10 @@ import * as types from './type-util'
 import * as attribute from './attribute-util'
 import * as common from './common-util'
 import * as time from './time-util'
+import * as assert from './assert-util'
 
 export {
+	assert,
 	vector,
 	matrix,
 	types,

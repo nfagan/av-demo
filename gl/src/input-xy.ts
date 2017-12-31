@@ -1,33 +1,34 @@
-type TouchCBT = (evt: TouchEvent) => void
-type MouseCBT = (evt: MouseEvent) => void
-type ListenerT = TouchCBT | MouseCBT
+export type TouchCBT = (evt: TouchEvent) => void
+export type MouseCBT = (evt: MouseEvent) => void
+export type ListenerT<K> = (evt: K) => void
+export type XYEvent = TouchEvent | MouseEvent
 
 type listeners = 'start' | 'move' | 'end'
 type listenerMap = { [K in listeners]: string }
 
-abstract class xy<T extends ListenerT> {
+export abstract class xy<K extends XYEvent> {
 	el: HTMLElement
 
 	constructor(el?: HTMLElement) {
 		this.el = (el === null || el === undefined) ? document.body : el
 	}
 
-	start(cb: T): void {
+	start(cb: ListenerT<K>): void {
 		this.el.addEventListener(this.getListenerNames()['start'], cb)
 	}
 
-	end(cb: T): void {
+	end(cb: ListenerT<K>): void {
 		this.el.addEventListener(this.getListenerNames()['end'], cb)
 	}
 
-	move(cb: T): void {
+	move(cb: ListenerT<K>): void {
 		this.el.addEventListener(this.getListenerNames()['move'], cb)
 	}
 
 	public abstract getListenerNames(): listenerMap
 }
 
-export class Touch extends xy<TouchCBT> {
+export class Touch extends xy<TouchEvent> {
 
 	el: HTMLElement
 
@@ -40,7 +41,7 @@ export class Touch extends xy<TouchCBT> {
 	}
 }
 
-export class Mouse extends xy<MouseCBT> {
+export class Mouse extends xy<MouseEvent> {
 
 	el: HTMLElement
 

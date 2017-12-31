@@ -17,13 +17,16 @@ export namespace Maps {
 	}
 
 	export class Light {
-		static items: { [K in _Light.AttributeNames]: string } = {
+		static items: { [K in _Light.LightUniformNames]: string } = {
 			'position': 'position',
+			'direction': 'direction',
 			'color': 'color',
 			'index': 'index',
-			'active': 'calculate_lighting'
+			'mask': 'mask',
+			'point': 'point_lights',
+			'directional': 'directional_lights'
 		}
-		static getUniform(val: _Light.AttributeNames): string {
+		static getUniform(val: _Light.LightUniformNames): string {
 			return Light.items[val]
 		}
 	}
