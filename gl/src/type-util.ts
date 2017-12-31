@@ -1,4 +1,4 @@
-import { mat4, vec3, glMatrix } from 'gl-matrix'
+import { mat4, vec2, vec3, glMatrix } from 'gl-matrix'
 
 export type arrayPrimitive = Array<number>
 export type arrayLike = Array<number> | Float32Array
@@ -7,6 +7,7 @@ export type glmArray = vec3 | mat4
 export type primitive = number | boolean | string
 export type vec3Convertible = number | vec3 | Array<number>
 export type cloneable = primitive | mat4 | vec3 | arrayPrimitive
+export type vector = vec2 | vec3
 
 export enum core {
 	mat4,

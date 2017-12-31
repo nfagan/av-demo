@@ -16,6 +16,12 @@ app.get('/', (req, res) => {
 	res.sendFile('index.html', {root: __dirname})
 })
 
+app.get('/obj/:objName', (req, res) => {
+	var objPath = req.params.objName.replace(':', '/')
+	var filename = 'res/models/' + objPath
+	sendFileOr404(res, filename)
+})
+
 app.get('/sounds/:soundName', (req, res) => {
 	var filename = 'res/audio/' + req.params.soundName
 	sendFileOr404(res, filename)

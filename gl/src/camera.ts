@@ -2,12 +2,7 @@ import { quat, mat4, vec3, glMatrix } from 'gl-matrix'
 import { vector, types } from './util'
 import * as math from './wgl-math'
 
-enum directions {
-	forwards,
-	backwards,
-	left,
-	right
-}
+type directions = 'forwards' | 'backwards' | 'left' | 'right'
 
 class Camera {
 
@@ -20,6 +15,7 @@ class Camera {
 	front: vec3
 	movementSpeed: number = 2.5
 	rotationSensitivity: number = 0.1
+	target: vec3 | null = null
 
 	constructor() {
 		this.position = vec3.fromValues(0, 0, 0)
@@ -31,14 +27,24 @@ class Camera {
 	}
 
 	public getViewMatrix(): mat4 {
+		let hasTarget = this.target !== null
+		let target: vec3 = hasTarget ? this.target : vec3.create()
 		let view: mat4 = mat4.create()
-		let target: vec3 = vec3.create()
 		let position = this.position
 		let front = this.front
 		let up = this.up
-		vec3.add(target, position, front)
+		if (!hasTarget)
+			vec3.add(target, position, front)
 		math.lookAt(view, position, target, up)
 		return view
+	}
+
+	public lookAt(where: types.vec3Convertible | null) {
+		if (where === null) {
+			this.target = null
+			return
+		}
+		this.target = vector.requireVec3(where)
 	}
 
 	public setPosition(position: types.vec3Convertible) {
@@ -70,13 +76,13 @@ class Camera {
 		vec3.copy(front_, front)
 		vec3.copy(right_, right)
 
-		if (direction === directions.forwards) {
+		if (direction === 'forwards') {
 			vec3.add(position, position, vec3.multiply(front_, front_, velocity))
-		} else if (direction === directions.backwards) {
+		} else if (direction === 'backwards') {
 			vec3.sub(position, position, vec3.multiply(front_, front_, velocity))
-		} else if (direction === directions.left) {
+		} else if (direction === 'left') {
 			vec3.sub(position, position, vec3.multiply(right_, right_, velocity))
-		} else if (direction === directions.right) {
+		} else if (direction === 'right') {
 			vec3.add(position, position, vec3.multiply(right_, right_, velocity))
 		}
 	}

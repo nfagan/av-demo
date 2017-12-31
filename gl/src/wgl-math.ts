@@ -1,5 +1,5 @@
 import * as glm from 'gl-matrix'
-import { vector } from './util'
+import { vector, types } from './util'
 
 export function clamp<T extends Float32Array>(val: T, min: number, max: number): void {
 	for (let i: number = 0; i < val.length; i++) {
@@ -10,6 +10,38 @@ export function clamp<T extends Float32Array>(val: T, min: number, max: number):
 
 export function radians(val: number): number {
 	return glm.glMatrix.toRadian(val)
+}
+
+export function vecsum<T extends types.vector>(arr: Array<T>): T {
+	if (arr.length === 0)
+		return null
+	let res: types.vector
+	if (arr[0].length === 2) {
+		res = glm.vec2.fromValues(0, 0)
+	} else if (arr[0].length === 3) {
+		res = glm.vec3.fromValues(0, 0, 0)
+	}
+	for (let i = 0; i < arr.length; i++) {
+		for (let j = 0; j < res.length; j++) {
+			res[j] += arr[i][j]
+		}
+	}
+	return <T>res
+}
+
+export function vecmean<T extends types.vector>(arr: Array<T>): T {
+	let sum = vecsum(arr)
+	if (sum === null)
+		return null
+	let mean = sum
+	for (let i = 0; i < mean.length; i++) {
+		mean[i] /= arr.length
+	}
+	return <T>mean
+}
+
+export function distance(a: glm.vec2, b: glm.vec2): number {
+	return Math.sqrt(Math.pow(b[0]-a[0], 2) + Math.pow(b[1]-a[1], 2))
 }
 
 export function max(arr: Array<number>) {

@@ -47,8 +47,8 @@ function initStats(): void {
 	fpsStats.stats = new wgl.FrameStats()
 }
 
-function updateStats(dt: number) {
-	fpsStats.stats.update(dt)
+function updateStats() {
+	fpsStats.stats.update()
 	fpsStats.el.innerHTML = fpsStats.stats.getString()
 }
 
@@ -184,13 +184,13 @@ export async function main() {
 		let speed = 2.0
 		lastTime = currentTime
 
-		if (!firstIteration) updateStats(dt)
+		if (!firstIteration) updateStats()
 		if (firstIteration) firstIteration = false
 
-		if (keyStates[87]) camera.move(wgl.directions.forwards, dt, speed)
-		if (keyStates[65]) camera.move(wgl.directions.left, dt, speed)
-		if (keyStates[68]) camera.move(wgl.directions.right, dt, speed)
-		if (keyStates[83]) camera.move(wgl.directions.backwards, dt, speed)
+		if (keyStates[87]) camera.move('forwards', dt, speed)
+		if (keyStates[65]) camera.move('left', dt, speed)
+		if (keyStates[68]) camera.move('right', dt, speed)
+		if (keyStates[83]) camera.move('backwards', dt, speed)
 
 		if (newMovement) {
 			camera.rotate(offsetX, -offsetY)

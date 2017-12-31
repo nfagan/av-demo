@@ -1,7 +1,6 @@
 import * as wgl from '../gl/src/web-gl'
 import * as waud from '../aud/src/web-audio'
-import { mat4, vec3, glMatrix } from 'gl-matrix'
-import * as interact from 'interactjs'
+import { mat4, vec4, vec3, glMatrix } from 'gl-matrix'
 
 function getPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nLevels: number): Array<wgl.Model> {
 	let planeModels = []
@@ -63,8 +62,8 @@ function initStats(): void {
 	fpsStats.stats = new wgl.FrameStats()
 }
 
-function updateStats(dt: number) {
-	fpsStats.stats.update(dt)
+function updateStats() {
+	fpsStats.stats.update()
 	fpsStats.el.innerHTML = fpsStats.stats.getString()
 }
 
@@ -111,12 +110,16 @@ export async function main() {
 	document.body.style.margin = '0'
 	document.body.style.position = 'fixed'
 
+	const keyboard = new wgl.Input.Keyboard()
 	const canvas = new wgl.Canvas()
 	const canvasElement = canvas.element
 
 	const gl: WebGLRenderingContext = canvasElement.getContext('webgl')
 
 	if (!gl) throw new Error('Unable to initialize GL context.')
+
+	let firstObj = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/stall:stall.obj')
+	firstObj.finalize()
 
 	initStats()
 
@@ -125,6 +128,7 @@ export async function main() {
 	const light = wgl.Light.Light.Point(gl)
 	const light2 = wgl.Light.Light.Point(gl)
 	const camera: wgl.Camera = new wgl.Camera()
+	const moveControls = new wgl.Controls.Movement.Keyboard(keyboard, camera, 5.0)
 
 	renderer.setAspect(canvas.aspect)
 
@@ -147,21 +151,15 @@ export async function main() {
 
 	const planeModel = new wgl.Model(gl, prog, plane, mat)
 	const sphereModel = new wgl.Model(gl, prog, sphere, mat)
+	const cottageModel = new wgl.Model(gl, prog, firstObj, mat)
+	const bigSphere = new wgl.Model(gl, prog, sphere, mat)
+
+	bigSphere.setPosition([0, 0, 0])
+	bigSphere.setScale(5)
 
 	planeModel.setPosition(vec3.fromValues(0, -1, 0))
 	planeModel.setRotation(vec3.fromValues(90, 0, 0))
 	planeModel.setScale(vec3.fromValues(2, 2, 2))
-
-	let keyStates: { [key:string]: boolean } = { 87: false, 65: false, 83: false, 68: false }
-	let keyCodes = Object.keys(keyStates)
-
-	const keySetter = (evt: KeyboardEvent, value: boolean) => {
-		keyCodes.map((code) => {
-			if (evt.keyCode == parseInt(code)) {
-				keyStates[code] = value
-			}
-		})
-	}
 
 	let offsetX: number = 0
 	let offsetY: number = 0
@@ -172,9 +170,6 @@ export async function main() {
 			lastT: 0, nVels: 100, meanVel: {x:0, y:0}, isRelease: false }
 	const lastsZ = { dist: 0, record: false, lastT: 0, offDist: 0 }
 	let newMovement: boolean = false
-
-	window.addEventListener('keydown', (evt: KeyboardEvent) => keySetter(evt, true))
-	window.addEventListener('keyup', (evt: KeyboardEvent) => keySetter(evt, false))
 
 	let isMouseListening: boolean = false
 	let isMouseControls: boolean = canvasElement.requestPointerLock !== undefined
@@ -218,7 +213,9 @@ export async function main() {
 					if (lasts.velocities.length < lasts.nVels) {
 						lasts.velocities.push(vel)
 					} else {
-						lasts.velocities[lasts.nVels-1] = vel
+						lasts.velocities.shift()
+						lasts.velocities.push(vel)
+						// lasts.velocities[lasts.nVels-1] = vel
 					}
 				}
 				lasts.meanVel = Mean(lasts.velocities)
@@ -245,7 +242,7 @@ export async function main() {
 				let offDist = currDist - lastsZ.dist
 				lastsZ.offDist = offDist
 				let dt = Date.now() - lastsZ.lastT
-				let dir = offDist > 0 ? wgl.directions.forwards : wgl.directions.backwards
+				let dir: wgl.directions = offDist > 0 ? 'forwards' : 'backwards'
 				camera.move(dir, dt, 0.01)
 			} else {
 				lastsZ.offDist = 0
@@ -262,7 +259,7 @@ export async function main() {
 		})
 	}
 
-	window.addEventListener('keydown', (evt: KeyboardEvent) => {
+	keyboard.down((evt) => {
 		if (evt.keyCode == 27) {
 			window.removeEventListener('mousemove', mouseListen)
 			isMouseListening = false
@@ -284,7 +281,10 @@ export async function main() {
 	let farPlanePositions = farPlaneModels.map(model => model.getPosition())
 
 	farPlaneModels.map(model => scene.add(model))
-	planeModels.map(model => scene.add(model))
+	// planeModels.map(model => scene.add(model))
+
+	// scene.add(cottageModel)
+	// scene.add(bigSphere)
 
 	scene.add(light)
 	scene.add(light2)
@@ -305,26 +305,27 @@ export async function main() {
 	camera.setPitch(-17)
 	camera.setYaw(-487)
 
+	// camera.setPosition([0, 0, 30])
+	// camera.setPitch(0)
+	// camera.setYaw(-90)
+
 	// camera.setPosition([9, 12, 5])
 	// camera.setPitch(-15)
 	// camera.setYaw(-450)
+
+	let needRecalc: boolean = false
 
 	const animate = () => {
 		let currentTime = Date.now()
 		let dt = (currentTime - lastTime) / 1000
 		let speed = 5.0
 
-		if (keyStates[87]) camera.move(wgl.directions.forwards, dt, speed)
-		if (keyStates[65]) camera.move(wgl.directions.left, dt, speed)
-		if (keyStates[68]) camera.move(wgl.directions.right, dt, speed)
-		if (keyStates[83]) camera.move(wgl.directions.backwards, dt, speed)
+		moveControls.update()
 
 		if (newMovement) {
 			camera.rotate(offsetX, -offsetY)
 			newMovement = false
 		}
-
-		// console.log(camera.position, camera.yaw, camera.pitch)
 
 		if (isVelocitySensitive && !isMouseControls && lasts.isRelease) {
 			camera.rotate(-lasts.meanVel.x, lasts.meanVel.y)
@@ -337,7 +338,7 @@ export async function main() {
 			if (Math.abs(lasts.meanVel.y) < 0.00001) lasts.meanVel.y = 0
 		}
 
-		if (!firstIteration) updateStats(dt)
+		if (!firstIteration) updateStats()
 		if (firstIteration) firstIteration = false
 
 		lastTime = currentTime
@@ -362,6 +363,64 @@ export async function main() {
 			let color = [1-value, 0, fracMax * value]
 			model.material.getAttribute('albedo').setValue(color)
 		})
+
+		let isLeftDown = keyboard.isDown(wgl.Input.Keys.Left)
+		let isRightDown = keyboard.isDown(wgl.Input.Keys.Right)
+
+		const clone = wgl.util.common.clone
+		let focusPoint = [0, 0, 0]
+		let pos = <vec3>clone(camera.position)
+		let camFocus = vec3.subtract(vec3.create(), pos, focusPoint)
+		let right = <vec3>clone(camera.right)
+		let up = <vec3>clone(camera.up)
+		let newPos = vec3.create()
+
+		if (isLeftDown || isRightDown) {
+
+			// camera.rotate(3, 0)
+			// camera.move('left', 1/60, 3)
+
+			right = vec3.normalize(right, right)
+			up = vec3.normalize(up, up)
+
+			let yaw = 1
+
+			if (isLeftDown)
+				yaw = -1
+
+			let mat = new wgl.util.matrix.transform()
+				.rotate(wgl.math.radians(yaw), up)
+				.mat()
+
+			let camFocus4 = vec4.fromValues(camFocus[0], camFocus[1], camFocus[2], 1)
+			vec4.transformMat4(camFocus4, camFocus4, mat)
+			vec4.add(camFocus4, camFocus4, [focusPoint[0], focusPoint[1], focusPoint[2], 0])
+
+			newPos[0] = camFocus4[0]
+			newPos[1] = camFocus4[1]
+			newPos[2] = camFocus4[2]
+
+			camera.setPosition(newPos)
+
+			// camera.lookAt(focusPoint)
+
+			needRecalc = true
+		} else if (needRecalc) {
+			// camera.lookAt(null)
+
+			// let direction = vec3.subtract(vec3.create(), focusPoint, camera.position)
+			// vec3.normalize(direction, direction)
+			// let newRight = vec3.cross(vec3.create(), direction, up)
+			// newRight[2] = 0
+			// vec3.normalize(newRight, newRight)
+			// let newUp = vec3.cross(vec3.create(), right, direction)
+			// vec3.normalize(newUp, newUp)
+
+			// camera.right = newRight
+			// camera.up = newUp
+
+			// needRecalc = false
+		}
 
 		renderer.render(scene, camera)
 

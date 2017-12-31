@@ -132,6 +132,13 @@ class Mesh extends Resource {
 		this._isBound = false
 	}
 
+	public dispose(): void {
+		if (!this.isFinalized)
+			return
+		const gl = this.gl
+		gl.deleteBuffer(this.vbo)
+		gl.deleteBuffer(this.ebo)
+	}
 
 	private storeBufferData(): void {
 		const gl = this.gl

@@ -15,13 +15,19 @@ import * as renderers from './renderers'
 import * as math from './wgl-math'
 import * as util from './util'
 import { Canvas } from './canvas'
+import * as Loaders from './loaders'
+import * as Input from './input'
+import * as Controls from './camera-controls'
 
 export {
 	Camera,
 	Canvas,
+	Controls,
 	directions,
+	Input,
 	FrameStats,
 	Light,
+	Loaders,
 	math,
 	Material,
 	MeshFactory,
