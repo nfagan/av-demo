@@ -3,8 +3,8 @@ import { ShaderSource, ShaderProgramSource, ShaderTypes } from '../shader'
 namespace _sources {
 	export const vertex: string = `
 		attribute vec3 in_position;
-		attribute vec2 in_uv;
 		attribute vec3 in_normal;
+		attribute vec2 in_uv;
 
 		uniform mat4 model;
 		uniform mat4 projection;
@@ -35,8 +35,7 @@ const Basic: ShaderProgramSource = {
 			source: _sources.fragment,
 			type: ShaderTypes.FRAGMENT,
 		}
-	],
-	uniforms: ['model', 'projection', 'view', 'color']
+	]
 }
 
 export { Basic }

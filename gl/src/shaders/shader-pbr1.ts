@@ -213,8 +213,7 @@ const PBR1: ShaderProgramSource = {
 			source: _sources.fragment,
 			type: ShaderTypes.FRAGMENT,
 		}
-	],
-	uniforms: ['model', 'projection', 'view']
+	]
 }
 
 export { PBR1 }

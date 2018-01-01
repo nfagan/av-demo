@@ -29,14 +29,23 @@ class Material extends attribute.Attributable<Attribute, MaterialAttributeMap, A
 		return this._clone(Material, Attribute, this.gl)
 	}
 
+	public static Basic(gl: WebGLRenderingContext,
+			_albedo: types.vec3Convertible = [1, 1, 1]): Material {
+		
+		let mat = new Material(gl)
+		mat.addAttribute(new Attribute('albedo', _albedo, attribute.validators.Vec3))
+		return mat
+	}
+
 	public static Physical(gl: WebGLRenderingContext,
 				_albedo: types.vec3Convertible = [1, 1, 1], 
 				_roughness: number = 0.1,
 				_metallic: number = 0.1): Material {
+
 		let mat = new Material(gl)
 		mat.addAttribute(new Attribute('albedo', _albedo, attribute.validators.Vec3))
-		mat.addAttribute(new Attribute('metallic', _metallic, attribute.validators.Number))
 		mat.addAttribute(new Attribute('roughness', _roughness, attribute.validators.Number))
+		mat.addAttribute(new Attribute('metallic', _metallic, attribute.validators.Number))
 		return mat
 	}
 }

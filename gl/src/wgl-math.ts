@@ -8,6 +8,25 @@ export function clamp<T extends Float32Array>(val: T, min: number, max: number):
 	}
 }
 
+export function signedClamp<T extends Float32Array>(val: T, min: number, max: number): void {
+	for (let i: number = 0; i < val.length; i++) {
+		let _val = val[i]
+		let sign = _val < 0 ? -1 : 1
+		if (Math.abs(_val) < min) {
+			val[i] = min * sign
+		}
+		if (Math.abs(_val) > max) {
+			val[i] = max * sign
+		}
+	}
+}
+
+export function abs<T extends Float32Array>(val: T): void {
+	for (let i: number = 0; i < val.length; i++) {
+		val[i] = Math.abs(val[i])
+	}
+}
+
 export function radians(val: number): number {
 	return glm.glMatrix.toRadian(val)
 }

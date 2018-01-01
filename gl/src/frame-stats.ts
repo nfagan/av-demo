@@ -15,7 +15,7 @@ class FrameStats {
 
 	constructor() {
 		this.timer = new time.DeltaTimer()
-		this.timer.setRatio(new time.ratios.s())
+		this.timer.setRatio(time.ratios.s())
 		this.setupElement()
 	}
 
@@ -26,7 +26,7 @@ class FrameStats {
 		el.style.left = '0px'
 		el.style.top = '0px'
 		el.style.backgroundColor = 'black'
-		el.style.opacity = '0'
+		el.style.opacity = '0.5'
 		el.style.color = 'white'
 		el.onclick = (evt: MouseEvent) => {
 			el.style.opacity = self.visible ? '0' : '0.5'

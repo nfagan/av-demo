@@ -5,12 +5,13 @@ export class transform {
 
 	data: glm.mat4
 
-	constructor(data?: glm.mat4) {
-		if (data == null) {
-			this.data = glm.mat4.create()
-		} else {
-			this.data = data
-		}
+	constructor(data: glm.mat4 = glm.mat4.create()) {
+		this.data = data
+	}
+
+	public identity(): transform {
+		glm.mat4.identity(this.data)
+		return this
 	}
 
 	public translate(val: types.vec3Convertible): transform {
@@ -32,8 +33,15 @@ export class transform {
 	}
 
 	public mat(): glm.mat4 {
-		// return glm.mat4.copy(glm.mat4.create(), this.data)
 		return this.data
+	}
+
+	public clone(): transform {
+		return new transform(this.matCopy())
+	}
+
+	public matCopy(): glm.mat4 {
+		return glm.mat4.copy(glm.mat4.create(), this.data)
 	}
 
 }

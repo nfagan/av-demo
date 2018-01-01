@@ -10,7 +10,9 @@ export namespace Orbit {
 
 	type OrbitOpts = {
 		nVelocitySamples: number,
-		velocityDecaySensitivity: number
+		velocityDecaySensitivity: number,
+		maxVelocity: number,
+		speed: number
 	}
 
 	abstract class _Orbit<T extends XY.XYEvent, X extends XY.xy<T>> {
@@ -23,6 +25,8 @@ export namespace Orbit {
 		velocities: Array<vec2>
 		velocity: vec2
 		nVelocitySamples: number
+		speed: number
+		maxVelocity: number
 		meanVelocity: vec2
 		coordinates: vec2
 		deltas: vec2
@@ -38,6 +42,8 @@ export namespace Orbit {
 			this.velocity = vec2.fromValues(0, 0)
 			this.nVelocitySamples = opts.nVelocitySamples
 			this.velocityDecaySensitivity = opts.velocityDecaySensitivity
+			this.speed = opts.speed
+			this.maxVelocity = opts.maxVelocity
 			this.meanVelocity = vec2.fromValues(0, 0)
 			this.coordinates = vec2.fromValues(0, 0)
 			this.deltas = vec2.fromValues(0, 0)
@@ -76,12 +82,11 @@ export namespace Orbit {
 				if (deltaT > 0) {
 					let velocity = vec2.copy(self.velocity, self.deltas)
 					vec2.divide(velocity, velocity, vec2.fromValues(deltaT, deltaT))
-					if (self.velocities.length < self.nVelocitySamples) {
-						self.velocities.push(velocity)
-					} else {
+					//	keep values in range [-Infinity, maxVelocity], preserving sign
+					math.signedClamp(velocity, -Infinity, self.maxVelocity)
+					if (self.velocities.length === self.nVelocitySamples)
 						self.velocities.shift()
-						self.velocities.push(velocity)
-					}
+					self.velocities.push(velocity)
 				}
 				if (self.velocities.length > 0) {
 					self.meanVelocity = <vec2>math.vecmean(self.velocities)
@@ -100,7 +105,9 @@ export namespace Orbit {
 		public static Defaults(): OrbitOpts {
 			return {
 				nVelocitySamples: 100,
-				velocityDecaySensitivity: 1.1
+				velocityDecaySensitivity: 1.1,
+				maxVelocity: 4000,
+				speed: 4
 			}
 		}
 	}
@@ -167,8 +174,8 @@ export namespace Orbit {
 				deltas[1] = 0
 			} else {
 				let vel = orbit.meanVelocity
-				let xvel = (vel[0] * ratio.second) / ratio.first
-				let yvel = (vel[1] * ratio.second) / ratio.first
+				let xvel = (vel[0] * ratio.second) / ratio.first * orbit.speed
+				let yvel = (vel[1] * ratio.second) / ratio.first * orbit.speed
 				if (orbit.shouldInvert()) {
 					camera.rotate(-xvel, yvel)
 				} else {
@@ -181,22 +188,13 @@ export namespace Orbit {
 			}
 		}
 	}
-
-	export function Mouse(mouse: XY.Mouse, camera: Camera, opts: OrbitOpts = _Orbit.Defaults()): Orbit {
-		return new Orbit(mouse, camera, opts)
-	}
-
-	export function Touch(touch: XY.Touch, camera: Camera, opts: OrbitOpts = _Orbit.Defaults()): Orbit {
-		return new Orbit(touch, camera, opts)
-	}
-
 }
 
 export namespace Movement {
 
 	type KeyT = { [K in directions]: number }
 
-	abstract class movement<T> {
+	export abstract class movement<T> {
 		protected timer: DeltaTimer
 		protected input: T
 		protected camera: Camera
@@ -257,62 +255,10 @@ export namespace Movement {
 			this.dist = 0
 			this.began = false
 
-			this.setupMovement()
-			this.setupRotation()
+			this.setup()
 		}
 
-		private setupRotation(): void {
-			const touch = this.input
-			const self = this
-			const camera = this.camera
-
-			touch.start(evt => {
-				if (self.began || evt.touches.length !== 3)
-					return
-				self.began = true
-				self.timer.update()
-			})
-
-			// touch.move(evt => {
-			// 	evt.preventDefault()
-			// 	self.timer.update()
-			// 	if (evt.touches.length !== 3)
-			// 		return
-			// 	const clone = common.clone
-			// 	let focusPoint = [0, 0, 0]
-			// 	let pos = <vec3>clone(camera.position)
-			// 	let camFocus = vec3.subtract(vec3.create(), pos, focusPoint)
-			// 	let right = <vec3>clone(camera.right)
-			// 	let up = <vec3>clone(camera.up)
-			// 	let newPos = vec3.create()
-			// 	right = vec3.normalize(right, right)
-			// 	up = vec3.normalize(up, up)
-
-			// 	// let yaw = 1
-
-			// 	// if (isLeftDown)
-			// 	let yaw = -1 * self.timer.delta()
-
-			// 	let mat = new matrix.transform()
-			// 		.rotate(math.radians(yaw), up)
-			// 		.mat()
-
-			// 	let camFocus4 = vec4.fromValues(camFocus[0], camFocus[1], camFocus[2], 1)
-			// 	vec4.transformMat4(camFocus4, camFocus4, mat)
-			// 	vec4.add(camFocus4, camFocus4, [focusPoint[0], focusPoint[1], focusPoint[2], 0])
-
-			// 	newPos[0] = camFocus4[0]
-			// 	newPos[1] = camFocus4[1]
-			// 	newPos[2] = camFocus4[2]
-			// 	camera.setPosition(newPos)
-			// })
-
-			touch.end(evt => {
-				self.began = false
-			})
-		}
-
-		private setupMovement(): void {
+		private setup(): void {
 			const touch = this.input
 			const self = this
 
@@ -357,4 +303,139 @@ export namespace Movement {
 		}
 
 	}
+}
+
+export namespace Rotation {
+
+	export class Touch extends Movement.movement<XY.Touch> {
+
+		didTap: boolean
+		tapDetector: XY.DoubleTapDetector
+		last: vec2
+		lastVel: vec2
+		current: vec2
+		velocities: Array<vec2> = []
+		nVelocities: number = 100
+
+		constructor(touch: XY.Touch, camera: Camera, speed: number) {
+			super(touch, camera, speed)
+
+			this.didTap = false
+			this.tapDetector = new XY.DoubleTapDetector(touch)
+
+			this.last = vec2.create()
+			this.current = vec2.create()
+			this.lastVel = vec2.create()
+
+			this.setup()
+		}
+
+		public update(): void {
+			this.timer.update()
+		}
+
+		private setup(): void {
+			const touch = this.input
+			const self = this
+			const camera = this.camera
+			const detector = this.tapDetector
+
+			const reset = (evt: TouchEvent) => {
+				self.didTap = true
+				self.last[0] = evt.touches[0].clientX
+				self.last[1] = evt.touches[0].clientY
+				self.velocities = []
+			}
+
+			// detector.doubletap(evt => {
+			// 	reset(evt)
+			// })
+
+			// touch.start(evt => {
+			// 	self.timer.update()
+			// })
+
+			touch.start(evt => {
+				if (evt.touches.length !== 3) 
+					return
+				reset(evt)
+				self.timer.update()
+			})
+
+			touch.move(evt => {
+				if (!self.didTap || evt.touches.length !== 3)
+					return
+
+				evt.preventDefault()
+				evt.stopPropagation()
+				self.timer.update()
+				const clone = common.clone
+				let touch0 = evt.touches[0]
+				let focusPoint = [0, 0, 0]
+				let pos = <vec3>clone(camera.position)
+				let camFocus = vec3.subtract(vec3.create(), pos, focusPoint)
+				let right = <vec3>clone(camera.right)
+				let up = <vec3>clone(camera.up)
+				let newPos = vec3.create()
+				right = vec3.normalize(right, right)
+				up = vec3.normalize(up, up)
+
+				let deltaPos = vec2.fromValues(touch0.clientX, touch0.clientY)
+				let dt = self.timer.delta()
+				let vel = vec2.fromValues(0, 0)
+				deltaPos = vec2.subtract(deltaPos, deltaPos, self.last)
+
+				if (dt > 0) {
+					vel = vec2.divide(vel, deltaPos, vec2.fromValues(dt, dt))
+				} else {
+					vel.set(this.lastVel)
+				}
+
+				let speed = vec2.copy(vec2.create(), vel)
+				math.abs(speed)
+
+				if (self.velocities.length > 0) {
+					speed = math.vecmean(self.velocities)
+				} else {
+					speed[0] = vel[0]
+					speed[1] = vel[1]
+				}
+
+				let yaw = vel[0] * 0.002
+				let pitch = vel[1] * 0.002
+
+				// let yaw = speed[0] === 0 ? 0 : vel[0] / speed[0]
+				// let pitch = speed[1] === 0 ? 0 : vel[1] / speed[1]
+
+				let mat = new matrix.transform()
+					.rotate(math.radians(yaw), up)
+					.rotate(math.radians(pitch), right)
+					.mat()
+
+				let camFocus4 = vec4.fromValues(camFocus[0], camFocus[1], camFocus[2], 1)
+				vec4.transformMat4(camFocus4, camFocus4, mat)
+				vec4.add(camFocus4, camFocus4, [focusPoint[0], focusPoint[1], focusPoint[2], 0])
+
+				newPos[0] = camFocus4[0]
+				newPos[1] = camFocus4[1]
+				newPos[2] = camFocus4[2]
+
+				camera.setPosition(newPos)
+
+				self.last[0] = touch0.clientX
+				self.last[1] = touch0.clientY
+				self.lastVel.set(vel)
+
+				if (self.velocities.length === self.nVelocities)
+					self.velocities.shift()
+				self.velocities.push(vec2.fromValues(speed[0], speed[1]))
+			})
+
+			touch.end(evt => {
+				self.didTap = false
+			})
+		}
+
+	}
+
 }

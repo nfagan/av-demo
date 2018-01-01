@@ -18,7 +18,6 @@ type ShaderSource = {
 
 type ShaderProgramSource = {
 	sources: Array<ShaderSource>
-	uniforms: Array<string>
 }
 
 type ShaderAttribute = {

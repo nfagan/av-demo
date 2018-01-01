@@ -93,6 +93,7 @@ export async function main() {
 	}
 
 	const touchMoveControls = new wgl.Controls.Movement.Touch(touchInput, camera, 25.0)
+	// const touchRotateControls = new wgl.Controls.Rotation.Touch(touchInput, camera, 25.0)
 
 	canvas.element.onclick = (evt) => audioManager.togglePlay(files[0], destination)
 
@@ -110,6 +111,7 @@ export async function main() {
 	const sphere = wgl.MeshFactory.create(gl, 'sphere', {finalize: true})
 	const plane = wgl.MeshFactory.create(gl, 'quad', {finalize: true})
 	const cubeMesh = wgl.MeshFactory.create(gl, 'cube', {finalize: true})
+
 	const mat = wgl.Material.Material.Physical(gl)
 
 	const planeModel = new wgl.Model(gl, prog, plane, mat)
