@@ -14,8 +14,8 @@ function getPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nLevels: numb
 	let planeModels = []
 	for (let i: number = 0; i < nLevels; i++) {
 		let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material.clone())
-		planeModel.setPosition(vec3.fromValues(0, -i-1, 0))
-		planeModel.setRotation(vec3.fromValues(90, 0, 0))
+		planeModel.setPosition([0, -i-1, 0])
+		planeModel.setRotation([90, 0, 0])
 		planeModels.push(planeModel)
 	}
 	return planeModels
@@ -26,7 +26,7 @@ function getFarPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nModels: n
 	for (let i: number = 0; i < nModels; i++) {
 		for (let j: number = 0; j < nModels; j++) {
 			let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material.clone())
-			planeModel.setPosition(vec3.fromValues(i/2, j/2, -10))
+			planeModel.setPosition([i/2, j/2, -10])
 			planeModel.setScale(0.5)
 			planeModels.push(planeModel)
 		}
