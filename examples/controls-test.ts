@@ -1,5 +1,5 @@
-import * as wgl from '../gl/src/web-gl'
-import * as waud from '../aud/src/web-audio'
+import * as wgl from '../gl/web-gl'
+import * as waud from '../aud/web-audio'
 import { mat4, vec3, glMatrix } from 'gl-matrix'
 
 export async function main() {
@@ -61,6 +61,7 @@ export async function main() {
 	canvas.element.onclick = evt => togglePlay()
 
 	renderer.setAspect(canvas.aspect)
+	renderer.setNearFar(0.1, 1000)
 
 	const light = wgl.Light.Light.Point(gl)
 	const light2 = wgl.Light.Light.Directional(gl)
@@ -159,6 +160,8 @@ export async function main() {
 		})
 
 		renderer.render(scene, camera)
+
+		// gl.finish()
 
 		window.requestAnimationFrame(animate)
 	}

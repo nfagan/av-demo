@@ -1,5 +1,5 @@
-import * as wgl from '../gl/src/web-gl'
-import * as waud from '../aud/src/web-audio'
+import * as wgl from '../gl/web-gl'
+import * as waud from '../aud/web-audio'
 import { mat4, vec4, vec3, glMatrix } from 'gl-matrix'
 
 function getPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nLevels: number): Array<wgl.Model> {

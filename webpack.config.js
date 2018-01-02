@@ -2,7 +2,7 @@ const path = require('path');
 const webpack = require('webpack')
 
 module.exports = {
-  entry: './src/main.ts',
+  entry: './examples/main.ts',
   devtool: 'inline-source-map',
   module: {
     rules: [
@@ -10,9 +10,9 @@ module.exports = {
         test: /\.tsx?$/,
         use: 'ts-loader',
         include: [ 
-          path.resolve(__dirname, 'src/'), 
-          path.resolve(__dirname, 'gl/src'),
-          path.resolve(__dirname, 'aud/src')
+          path.resolve(__dirname, 'examples/'), 
+          path.resolve(__dirname, 'gl/'),
+          path.resolve(__dirname, 'aud/')
         ],
       }
     ]

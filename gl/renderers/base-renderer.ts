@@ -7,7 +7,7 @@ export default class {
 	protected clearColor: vec3
 	protected fov: number = 45.0
 	protected near: number = 0.1
-	protected far: number = 100.0
+	protected far: number = 1000.0
 	protected aspect: number = 1.0
 
 	constructor(gl: WebGLRenderingContext) {
@@ -20,6 +20,12 @@ export default class {
 	protected setup(): void {
 		const gl = this.gl
 		gl.enable(gl.DEPTH_TEST)
+	}
+
+	public setNearFar(near: number, far: number): void {
+		this.near = near
+		this.far = far
+		this.projection = this.getProjectionMatrix()
 	}
 
 	public clear(): void {

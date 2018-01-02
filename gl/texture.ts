@@ -25,8 +25,8 @@ export class TextureOpts {
 		opts.sourceFormat = gl.RGBA
 		opts.type = gl.TEXTURE_2D
 		opts.dataType = gl.UNSIGNED_BYTE
-		opts.wrapS = gl.TEXTURE_WRAP_S
-		opts.wrapT = gl.TEXTURE_WRAP_T
+		opts.wrapS = gl.CLAMP_TO_EDGE
+		opts.wrapT = gl.CLAMP_TO_EDGE
 		return opts
 	}
 }
@@ -74,14 +74,14 @@ export class Texture extends Resource {
 	private configure2DImage(data: HTMLImageElement, tex: WebGLTexture): void {
 		const opts = this.opts
 		const gl = this.gl
-		gl.texImage2D(gl.TEXTURE_2D, opts.level, opts.internalFormat,
-                opts.sourceFormat, opts.dataType, data)
+		gl.texImage2D(gl.TEXTURE_2D, opts.level, opts.internalFormat, 
+			opts.sourceFormat, opts.dataType, data)
 
 		if (math.isPow2(data.width) && math.isPow2(data.height)) {
 			gl.generateMipmap(gl.TEXTURE_2D)
-	    } else {
-	    	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	    	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+		} else {
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, opts.wrapS)
+	    	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, opts.wrapT)
 	    	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	    }
 	}
