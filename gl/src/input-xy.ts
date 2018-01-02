@@ -1,6 +1,7 @@
 import { time } from './util'
 import { vec2 } from 'gl-matrix'
 import * as math from './wgl-math'
+import * as capabilities from './capabilities'
 
 export type TouchCBT = (evt: TouchEvent) => void
 export type MouseCBT = (evt: MouseEvent) => void
@@ -11,9 +12,9 @@ type listeners = 'start' | 'move' | 'end'
 type listenerMap = { [K in listeners]: string }
 
 export abstract class xy<K extends XYEvent> {
-	el: HTMLElement
+	el: HTMLElement | Window
 
-	constructor(el?: HTMLElement) {
+	constructor(el?: HTMLElement | Window) {
 		this.el = (el === null || el === undefined) ? document.body : el
 	}
 
@@ -30,11 +31,13 @@ export abstract class xy<K extends XYEvent> {
 	}
 
 	public abstract getListenerNames(): listenerMap
+	public abstract shouldInvert(): boolean
+	public abstract getPrimaryCoordinates(evt: K): vec2
 }
 
 export class Touch extends xy<TouchEvent> {
 
-	el: HTMLElement
+	el: HTMLElement | Window
 
 	getListenerNames(): listenerMap {
 		return {
@@ -43,11 +46,26 @@ export class Touch extends xy<TouchEvent> {
 			'move': 'touchmove'
 		}
 	}
+
+	shouldInvert(): boolean { return true }
+
+	getPrimaryCoordinates(evt: TouchEvent, out?: vec2): vec2 {
+		if (!out)
+			out = vec2.create()
+		if (evt.touches.length === 0) {
+			out[0] = 0
+			out[1] = 0
+		} else {
+			out[0] = evt.touches[0].clientX
+			out[1] = evt.touches[0].clientY
+		}
+		return out
+	}
 }
 
 export class Mouse extends xy<MouseEvent> {
 
-	el: HTMLElement
+	el: HTMLElement | Window
 
 	getListenerNames(): listenerMap {
 		return {
@@ -57,6 +75,61 @@ export class Mouse extends xy<MouseEvent> {
 		}
 	}
 
+	shouldInvert(): boolean { return false }
+
+	getPrimaryCoordinates(evt: MouseEvent, out?: vec2): vec2 {
+		if (!out)
+			out = vec2.create()
+		out[0] = evt.clientX
+		out[1] = evt.clientY
+		return out
+	}
+}
+
+export class PointerLock extends Mouse {
+
+	el: HTMLCanvasElement
+	coordinates: vec2
+	isLocked: boolean
+
+	constructor(el: HTMLCanvasElement) {
+		super(el)
+		this.coordinates = vec2.fromValues(0, 0)
+		this.isLocked = false
+		this.setup()
+	}
+
+	private setup(): void {
+		if (!capabilities.hasPointerLock()) {
+			console.warn('Pointer locking is not supported in your browser;' +
+				' regular mouse input will be used instead.')
+			return
+		}
+		let self = this
+		document.addEventListener('pointerlockchange', (evt: MouseEvent) => {
+			self.isLocked = !self.isLocked
+		}, false)
+		self.el.addEventListener('click', (evt: MouseEvent) => {
+			evt.preventDefault()
+			if (!self.isLocked) {
+				self.el.requestPointerLock()
+			}
+		})
+	}
+
+	getPrimaryCoordinates(evt: MouseEvent, out?: vec2): vec2 {
+		if (!out)
+			out = vec2.create()
+		if (this.isLocked) {
+			this.coordinates[0] += evt.movementX
+			this.coordinates[1] += evt.movementY
+		} else {
+			this.coordinates[0] = evt.clientX
+			this.coordinates[1] = evt.clientY
+		}
+		out.set(this.coordinates)
+		return out
+	}
 }
 
 export type DoubleTapDetectorOpts = {

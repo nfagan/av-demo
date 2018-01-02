@@ -2,11 +2,13 @@ import base from './base-renderer'
 import * as Shader from '../shader'
 import * as Light from '../light'
 import { Mesh } from '../mesh'
-import { Maps } from '../uniforms'
+import * as uniforms from '../uniforms'
 import { Model } from '../model'
 import { Camera } from '../camera'
 import { mat4 } from 'gl-matrix'
 import * as Material from '../material'
+import * as texture from '../texture'
+import { types } from '../util'
 import { Scene } from '../scene'
 
 export default class extends base {
@@ -29,35 +31,50 @@ export default class extends base {
 		this.configureLights(scene.models[0].program, scene.lights)
 
 		for (let model of scene.models) {
-			const prog = model.program
-			const material = model.material
-			const mesh = model.mesh
-			if (this.conditionalBindProgram(prog)) {
-				this.configureCamera(prog, camera)
-				this.configureLights(prog, scene.lights)
-			}
-			this.configureTransform(prog, model.getTransformationMatrix())
-			this.configureMaterial(prog, material)
-			this.draw(prog, mesh)
+			this.drawModel(scene, camera, model)
 		}
+
+		this.drawBackground(scene, camera)
 	}
 
-	public draw(prog: Shader.ShaderProgram, mesh: Mesh) {
+	private drawBackground(scene: Scene, camera: Camera): void {
+		if (!scene.background)
+			return
+		const gl = this.gl
+		gl.depthFunc(gl.LEQUAL)
+		this.drawModel(scene, camera, scene.background)
+		gl.depthFunc(gl.LESS)
+	}
+
+	private drawModel(scene: Scene, camera: Camera, model: Model): void {
+		const prog = model.program
+		const material = model.material
+		const mesh = model.mesh
+		if (this.conditionalBindProgram(prog)) {
+			this.configureCamera(prog, camera)
+			this.configureLights(prog, scene.lights)
+		}
+		this.configureTransform(prog, model.getWorldMatrix())
+		this.configureMaterial(prog, material)
+		this.draw(prog, mesh)
+	}
+
+	public draw(prog: Shader.ShaderProgram, mesh: Mesh): void {
 		this.conditionalBindProgram(prog)
 		this.conditionalBindMesh(prog, mesh)
 		mesh.draw()
 	}
 
-	public configureTransform(prog: Shader.ShaderProgram, transformMatrix: mat4) {
+	public configureTransform(prog: Shader.ShaderProgram, transformMatrix: mat4): void {
 		this.conditionalBindProgram(prog)
-		prog.setUniform(Maps.Core.getUniform('model'), transformMatrix)
+		this.conditionalSetUniform(prog, 'model', transformMatrix)
 	}
 
 	public configureCamera(prog: Shader.ShaderProgram, camera: Camera): void {
 		this.conditionalBindProgram(prog)
-		prog.setUniform(Maps.Core.getUniform('projection'), this.projection)
-		prog.setUniform(Maps.Core.getUniform('view'), camera.getViewMatrix())
-		prog.setUniform(Maps.Core.getUniform('camera_position'), camera.position)
+		this.conditionalSetUniform(prog, 'projection', this.projection)
+		this.conditionalSetUniform(prog, 'view', camera.getViewMatrix())
+		this.conditionalSetUniform(prog, 'camera_position', camera.position)
 	}
 
 	public configureMaterial(prog: Shader.ShaderProgram, material: Material.Material): void {
@@ -66,24 +83,32 @@ export default class extends base {
 		let attrs: Array<Material.Attribute> = material.enumerateAttributes()
 		for (let attr of attrs) {
 			if (isNew || attr.isDirty) {
-				prog.setUniform(Maps.Material.getUniform(attr.name), attr.getValue())
+				this.conditionalSetUniform(prog, attr.name, attr.getValue())
+			}
+			if (types.isTexture(attr.peekValue())) {
+				this.configureTexture(prog, attr.getValue() as texture.Texture)
 			}
 		}
+	}
+
+	public configureTexture(prog: Shader.ShaderProgram, tex: texture.Texture): void {
+		this.conditionalBindProgram(prog)
+		tex.bind()
 	}
 
 	public configureLight(prog: Shader.ShaderProgram, light: Light.Light): void {
 		this.conditionalBindProgram(prog)
 		let active: boolean = light.active
+		if (!active) return
 		let index = light.getIndex()
 		let attrs: Array<Light.Attribute> = light.enumerateAttributes()
-		if (!active) return
 		for (let attr of attrs) {
-			if (attr.name === 'index') continue
+			if (attr.name === 'index')
+				continue
 			if (attr.isDirty) {
-				let un = Maps.Light.getUniform(attr.name)
-				let mappedName = Maps.Light.getUniform(light.getName())
+				let un = uniforms.Map.getUniform(attr.name)
+				let mappedName = uniforms.Map.getUniform(light.getName())
 				let unf = `${mappedName}[${index}].${un}`
-				console.log(`updating ... ${unf}`)
 				prog.setUniform(unf, attr.getValue())
 			}
 		}
@@ -104,7 +129,7 @@ export default class extends base {
 	}
 
 	private conditionalBindMesh(prog: Shader.ShaderProgram, mesh: Mesh): boolean {
-		let isNullLastMesh: boolean = this.lastMesh == null
+		let isNullLastMesh: boolean = this.lastMesh === null
 		let isNewMesh: boolean = isNullLastMesh || !Mesh.equals(mesh, this.lastMesh)
 		if (isNewMesh) {
 			if (!isNullLastMesh && this.lastMesh.isBound()) this.lastMesh.unbind()
@@ -115,7 +140,7 @@ export default class extends base {
 	}
 
 	private conditionalBindProgram(prog: Shader.ShaderProgram): boolean {
-		let isNullLastProgram: boolean = this.lastProgram == null
+		let isNullLastProgram: boolean = this.lastProgram === null
 		let isNewProgram: boolean = isNullLastProgram || !Shader.ShaderProgram.equals(prog, this.lastProgram)
 		if (isNewProgram) {
 			if (!isNullLastProgram && this.lastProgram.isBound()) this.lastProgram.unbind()
@@ -123,6 +148,12 @@ export default class extends base {
 		}
 		this.lastProgram = prog
 		return isNewProgram
+	}
+
+	private conditionalSetUniform(prog: Shader.ShaderProgram, name: uniforms.UniformNames, value: Shader.UniformSettable): void {
+		if (prog.hasUniform(name)) {
+			prog.setUniform(uniforms.Map.getUniform(name), value)
+		}
 	}
 
 }

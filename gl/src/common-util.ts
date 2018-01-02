@@ -1,5 +1,6 @@
 import * as types from './type-util'
 import * as glm from 'gl-matrix'
+import { Texture } from './texture'
 
 function cloneGLMArray(data: types.glmArray): types.glmArray {
 	if (types.isMat4(data)) {
@@ -16,6 +17,8 @@ export function clone(data: types.cloneable) : types.cloneable {
 		return cloneGLMArray(data)
 	} else if (types.isArray(data)) {
 		return data.slice()
+	} else if (types.isTexture(data)) {
+		return data.clone()
 	}
 	throw new Error(`Unrecognized type.`)
 }

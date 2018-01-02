@@ -8,6 +8,10 @@ export class Ratio {
 		this.second = second
 		this.alias = alias
 	}
+
+	public static scale(a: Ratio, b: number) {
+		return (b / a.second) * a.first
+	}
 }
 
 export class Duration {
@@ -20,10 +24,8 @@ export class Duration {
 	}
 
 	public value(): number {
-		let first = this.ratio.first
-		let sec = this.ratio.second
-		let amt = this.amount
-		return (amt / sec) * first
+		return Ratio.scale(this.ratio, this.amount)
+		// return (amt / sec) * first
 	}
 
 	public static lt(a: Duration, b: Duration): boolean {

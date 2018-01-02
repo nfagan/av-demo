@@ -1,6 +1,6 @@
-import { Mesh } from './mesh'
-import { Vertex, Topologies } from './vertex'
-import * as assert from './assert-util'
+import { Mesh } from '../mesh'
+import { Vertex, Topologies } from '../vertex'
+import * as assert from '../assert-util'
 
 // https://github.com/YuqinShao/WebGL-Obj-Loader/blob/master/webgl-obj-loader.js
 
@@ -21,7 +21,9 @@ export namespace OBJ {
         return { finalize: false }
     }
 
-    export async function loadMesh(gl: WebGLRenderingContext, url: string, opts: MeshLoadOpts = Defaults()): Promise<Mesh> {
+    export async function loadMesh(gl: WebGLRenderingContext, url: string, opts?: MeshLoadOpts): Promise<Mesh> {
+        if (!opts)
+            opts = Defaults()
         let loader = new Promise<string>((resolve, reject) => {
             let xhr = new XMLHttpRequest()
             xhr.onreadystatechange = function() {
@@ -41,7 +43,10 @@ export namespace OBJ {
         })
     }
 
-    export function parseMesh(gl: WebGLRenderingContext, objectData: string, opts: MeshLoadOpts = Defaults()): Mesh {
+    export function parseMesh(gl: WebGLRenderingContext, objectData: string, opts?: MeshLoadOpts): Mesh {
+
+        if (!opts)
+            opts = Defaults()
 
         let lines: Array<string> = objectData.split('\n')
 

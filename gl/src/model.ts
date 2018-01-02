@@ -13,9 +13,15 @@ class Model extends Resource {
 	public program: ShaderProgram
 	public material: Material.Material
 
+	public alias: string
+
+	private parent: Model
+	private children: { [key: string]: Model }
+
 	private position: vec3
 	private rotation: vec3
 	private scale: vec3
+	private transform: matrix.transform
 
 	constructor(gl: WebGLRenderingContext, program: ShaderProgram, mesh: Mesh, material: Material.Material) {
 		super()
@@ -26,6 +32,11 @@ class Model extends Resource {
 		this.position = vec3.fromValues(0, 0, 0)
 		this.rotation = vec3.fromValues(0, 0, 0)
 		this.scale = vec3.fromValues(1, 1, 1)
+		this.alias = ''
+		this.transform = new matrix.transform
+
+		this.parent = null
+		this.children = {}
 	}
 
 	public setMesh(mesh: Mesh): void { 
@@ -52,18 +63,48 @@ class Model extends Resource {
 	public getRotation(): vec3 { return this.rotation }
 	public getScale(): vec3 { return this.scale }
 
-	public getTransformationMatrix(): mat4 {
-		return new matrix.transform()
-			.translate(this.position)
-			.rotate(math.radians(this.rotation[0]), [1, 0, 0])
-			.rotate(math.radians(this.rotation[1]), [0, 1, 0])
-			.rotate(math.radians(this.rotation[2]), [0, 0, 1])
-			.scale(this.scale)
+	public getWorldMatrix(): mat4 {
+		let local: mat4 = this.getLocalMatrix()
+		if (this.parent === null)
+			return local
+		let parentWorld: mat4 = this.parent.getWorldMatrix()
+		return mat4.mul(parentWorld, parentWorld, local)
+	}
+
+	public getLocalMatrix(): mat4 {
+		let trans = this.transform
+		let pos = this.position
+		let rot = this.rotation
+		let scl = this.scale
+		
+		return trans.identity()
+			.translate(pos)
+			.rotate(math.radians(rot[0]), [1, 0, 0])
+			.rotate(math.radians(rot[1]), [0, 1, 0])
+			.rotate(math.radians(rot[2]), [0, 0, 1])
+			.scale(scl)
 			.mat()
 	}
 
 	public static compareMeshUUID(a: Model, b: Model): number {
 		return Mesh.compareUUID(a.mesh, b.mesh)
+	}
+
+	public addChild(model: Model): void {
+		this.children[model.uuid] = model
+		model.parent = this
+	}
+
+	public hasChild(model: Model): boolean {
+		return this.children[model.uuid] !== undefined
+	}
+
+	public removeChild(model: Model): void {
+		if (!this.hasChild(model)) {
+			throw new Error(`Model "${model.alias}" is not a child of "${this.alias}".`)
+		}
+		this.children[model.uuid] = undefined
+		model.parent = null
 	}
 
 }

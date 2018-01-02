@@ -16,6 +16,12 @@ app.get('/', (req, res) => {
 	res.sendFile('index.html', {root: __dirname})
 })
 
+app.get('/tex/:texName', (req, res) => {
+	var texPath = req.params.texName.replace(':', '/')
+	var filename = 'res/textures/' + texPath
+	sendFileOr404(res, filename)
+})
+
 app.get('/obj/:objName', (req, res) => {
 	var objPath = req.params.objName.replace(':', '/')
 	var filename = 'res/models/' + objPath

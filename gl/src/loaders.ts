@@ -1,5 +1,7 @@
-import { OBJ } from './obj-loader'
+import { OBJ } from './loaders/obj-loader'
+import { TEX } from './loaders/texture-loader'
 
 export {
-	OBJ
+	OBJ,
+	TEX
 }

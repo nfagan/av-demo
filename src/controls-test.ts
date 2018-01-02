@@ -2,14 +2,6 @@ import * as wgl from '../gl/src/web-gl'
 import * as waud from '../aud/src/web-audio'
 import { mat4, vec3, glMatrix } from 'gl-matrix'
 
-//
-//	steps:
-//		translate camera to position along the front vector
-//		rotate at this origin
-//		translate back along front vector
-//	
-//
-
 function getPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nLevels: number): Array<wgl.Model> {
 	let planeModels = []
 	for (let i: number = 0; i < nLevels; i++) {
@@ -70,10 +62,12 @@ export async function main() {
 
 	if (!gl) throw new Error('Unable to initialize GL context.')
 
-	// let firstObj = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/stall:stall.obj')
-	// let firstObj = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/cube:cube.obj')
-	// let firstObj = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/lp_tree:lowpolytree.obj')
+	// gl.depthFunc(gl.LEQUAL)
+
 	let firstObj = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/test:test.obj', {finalize: true})
+	let firstTex = await wgl.Loaders.TEX.load2D(gl, '/tex/noodles.jpg')
+
+	firstTex.create()
 
 	const scene = new wgl.Scene(gl)
 	const renderer = new wgl.renderers.functional(gl)
@@ -82,12 +76,15 @@ export async function main() {
 	const camera: wgl.Camera = new wgl.Camera()
 	const keyboardMoveControls = new wgl.Controls.Movement.Keyboard(keyboard, camera, 5.0)
 	const touchInput = new wgl.Input.Touch()
-	const mouseInput = new wgl.Input.Mouse()
+	const mouseInput = new wgl.Input.PointerLock(canvas.element)
+	// const mouseInput = new wgl.Input.Mouse()
 
-	let rotationControls: wgl.Controls.Orbit.Orbit
+	let rotationControls: any
+	let rotationControlOpts = wgl.Controls.Orbit.Orbit2.Defaults()
+	rotationControlOpts.smooth = true
 
-	if ('requestPointerLock' in canvas.element) {
-		rotationControls = new wgl.Controls.Orbit.Orbit(mouseInput, camera)
+	if (wgl.capabilities.hasPointerLock()) {
+		rotationControls = new wgl.Controls.Orbit.Orbit2(mouseInput, camera, rotationControlOpts)
 	} else {
 		rotationControls = new wgl.Controls.Orbit.Orbit(touchInput, camera)
 	}
@@ -100,6 +97,7 @@ export async function main() {
 	renderer.setAspect(canvas.aspect)
 
 	const prog: wgl.ShaderProgram = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.PBR1)
+	const skyboxProg = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.Skybox)
 
 	light.setColor([1, 0.5, 0.25])
 	light.getAttribute('position').setValue([0, 0, -2])
@@ -108,9 +106,10 @@ export async function main() {
 	light2.setColor([1, 0, 0])
 	light2.getAttribute('direction').setValue([-20, -20, -20])
 
-	const sphere = wgl.MeshFactory.create(gl, 'sphere', {finalize: true})
-	const plane = wgl.MeshFactory.create(gl, 'quad', {finalize: true})
-	const cubeMesh = wgl.MeshFactory.create(gl, 'cube', {finalize: true})
+	const sphere = wgl.MeshFactory.create(gl, 'sphere')
+	const plane = wgl.MeshFactory.create(gl, 'quad')
+	const cubeMesh = wgl.MeshFactory.create(gl, 'cube')
+	const skyboxMesh = wgl.MeshFactory.create(gl, 'skybox')
 
 	const mat = wgl.Material.Material.Physical(gl)
 
@@ -118,6 +117,10 @@ export async function main() {
 	const sphereModel = new wgl.Model(gl, prog, sphere, mat)
 	const cottageModel = new wgl.Model(gl, prog, firstObj, mat.clone())
 	const sun = new wgl.Model(gl, prog, sphere, mat.clone())
+	const anchor = new wgl.Model(gl, prog, sphere, mat.clone())
+	const skybox = new wgl.Model(gl, skyboxProg, skyboxMesh, mat.clone())
+
+	skybox.material.getAttribute('albedo').setValue(firstTex)
 
 	sun.material.getAttribute('albedo').setValue(light2.getColor())
 	let dir = light2.getAttribute('direction').peekValue()
@@ -137,12 +140,14 @@ export async function main() {
 	let farPlanePositions = farPlaneModels.map(model => model.getPosition())
 
 	farPlaneModels.map(model => scene.add(model))
-	// planeModels.map(model => scene.add(model))
+	farPlaneModels.map(model => anchor.addChild(model))
 	scene.add(cottageModel)
 
 	scene.add(light)
 	scene.add(light2)
 	scene.add(sun)
+
+	scene.background = skybox
 
 	sphereModel.setPosition([-5, -5, 0])
 
@@ -170,6 +175,10 @@ export async function main() {
 			let color = [levels[i], 1-levels[i], 0]
 			model.material.getAttribute('albedo').setValue(color)
 		})
+
+		let pos = anchor.getRotation()
+		pos[1] += Math.cos(1/60) * (audioManager.getSound(files[0]).isPlaying ? 0.1 : 0)
+		anchor.setRotation(pos)
 
 		sphereModel.setPosition([-5, waves[0]*0.2, 0])
 		// light.getAttribute('color').setValue([0, 1-Math.abs(waves[0]*0.1), 1])

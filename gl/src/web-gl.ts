@@ -18,8 +18,10 @@ import { Canvas } from './canvas'
 import * as Loaders from './loaders'
 import * as Input from './input'
 import * as Controls from './camera-controls'
+import * as capabilities from './capabilities'
 
 export {
+	capabilities,
 	Camera,
 	Canvas,
 	Controls,

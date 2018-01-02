@@ -3,43 +3,44 @@ import * as _Light from './light'
 import * as _Material from './material'
 import * as _Shader from './shader'
 
-export namespace Maps {
+export type UniformNames = _Material.AttributeNames | _Light.LightUniformNames | _Shader.ShaderCoreUniformKinds
 
-	export class Material {
-		static items: { [K in _Material.AttributeNames]: string } = {
-			'albedo': 'albedo',
-			'roughness': 'roughness',
-			'metallic': 'metallic'
-		}
-		static getUniform(val: _Material.AttributeNames): string {
-			return Material.items[val]
-		}
+export class UniformMap<T> {
+	public items: { [key: string]: T }
+	constructor(names: UniformNames[], value: T) {
+		this.items = {}
+		const items = this.items
+		names.map(name => items[name] = value)
+	}
+	public hasUniform(name: UniformNames) {
+		return this.items[name] !== undefined
+	}
+}
+
+export class Map {
+	static items: { [K in UniformNames]: string } = {
+		// material
+		'albedo': 'albedo',
+		'roughness': 'roughness',
+		'metallic': 'metallic',
+
+		//	light
+		'position': 'position',
+		'direction': 'direction',
+		'color': 'color',
+		'index': 'index',
+		'mask': 'mask',
+		'point': 'point_lights',
+		'directional': 'directional_lights',
+
+		//	core
+		'model': 'model',
+		'view': 'view',
+		'projection': 'projection',
+		'camera_position': 'cam_position'
 	}
 
-	export class Light {
-		static items: { [K in _Light.LightUniformNames]: string } = {
-			'position': 'position',
-			'direction': 'direction',
-			'color': 'color',
-			'index': 'index',
-			'mask': 'mask',
-			'point': 'point_lights',
-			'directional': 'directional_lights'
-		}
-		static getUniform(val: _Light.LightUniformNames): string {
-			return Light.items[val]
-		}
-	}
-
-	export class Core {
-		static items: { [K in _Shader.ShaderCoreUniformKinds]: string } = {
-			'model': 'model',
-			'view': 'view',
-			'projection': 'projection',
-			'camera_position': 'cam_position'
-		}
-		static getUniform(val: _Shader.ShaderCoreUniformKinds): string {
-			return Core.items[val]
-		}
+	static getUniform(name: UniformNames): string {
+		return Map.items[name]
 	}
 }

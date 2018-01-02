@@ -207,11 +207,13 @@ const PBR1: ShaderProgramSource = {
 	sources: [
 		{
 			source: _sources.vertex,
-			type: ShaderTypes.VERTEX
+			type: ShaderTypes.VERTEX,
+			uniforms: ['model', 'view', 'projection']
 		},
 		{
 			source: _sources.fragment,
 			type: ShaderTypes.FRAGMENT,
+			uniforms: ['point', 'direction', 'albedo', 'roughness', 'metallic', 'camera_position']
 		}
 	]
 }

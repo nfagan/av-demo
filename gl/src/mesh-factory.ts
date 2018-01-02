@@ -5,7 +5,7 @@ import * as math from './wgl-math'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Creating_3D_objects_using_WebGL
 
-type MeshTypes = 'quad' | 'triangle' | 'sphere' | 'cube'
+type MeshTypes = 'quad' | 'triangle' | 'sphere' | 'cube' | 'skybox'
 
 type MeshCreateOptions = {
     finalize: boolean
@@ -16,7 +16,7 @@ class MeshFactory {
 
     public static Defaults(): MeshCreateOptions {
         return {
-            finalize: false,
+            finalize: true,
             vertexCount: 64
         }
     }
@@ -41,12 +41,42 @@ class MeshFactory {
             case 'cube':
                 MeshFactory.makeCube(mesh)
                 break
+            case 'skybox':
+                MeshFactory.makeSkybox(mesh)
+                break
         }
 
         if (opts.finalize)
             mesh.finalize()
 
         return mesh
+    }
+
+    public static makeSkybox(mesh: Mesh) {
+        const float32VertexData: Float32Array = new Float32Array(MeshLibrary.skybox.data)
+        for (let i = 0; i < 36; i++) {
+            let vertex: Vertex = new Vertex()
+            let x, y, z, u, v, nx, ny, nz: number
+
+            x = float32VertexData[i*5+0]
+            y = float32VertexData[i*5+1]
+            z = float32VertexData[i*5+2]
+
+            u = float32VertexData[i*5+3]
+            v = float32VertexData[i*5+4]
+
+            nx = 0
+            ny = 0
+            nz = 0
+
+            vertex.setPosition(new Float32Array([x, y, z]))
+            vertex.setUV(new Float32Array([u, v]))
+            vertex.setNormal(new Float32Array([nx, ny, nz]))
+
+            mesh.addVertex(vertex)
+        }
+
+        mesh.setTopology(Topologies.TRIANGLES)
     }
 	
 	public static makeQuad(mesh: Mesh) {

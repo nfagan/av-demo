@@ -1,15 +1,17 @@
 import { vec3 } from 'gl-matrix'
 import { types, vector, attribute, common } from './util'
+import * as texture from './texture'
 
 type AttributeNames = 'roughness' | 'albedo' | 'metallic'
 type ValidatorT = (attr: Attribute, data: SetT) => void
-type SetT = number | types.vec3Convertible
-type GetT = number | vec3
+type SetT = number | types.vec3Convertible | texture.Texture
+type GetT = number | vec3 | texture.Texture
 
 class Attribute extends attribute._Attribute<SetT, GetT, AttributeNames> {
 	_setValue(value: SetT): GetT {
-		if (typeof(value) != 'number')
+		if (typeof(value) != 'number' && !(value instanceof texture.Texture)) {
 			value = vector.requireVec3(value)
+		}
 		return value
 	}
 }
@@ -33,7 +35,7 @@ class Material extends attribute.Attributable<Attribute, MaterialAttributeMap, A
 			_albedo: types.vec3Convertible = [1, 1, 1]): Material {
 		
 		let mat = new Material(gl)
-		mat.addAttribute(new Attribute('albedo', _albedo, attribute.validators.Vec3))
+		mat.addAttribute(new Attribute('albedo', _albedo, attribute.validators.Vec3OrTexture))
 		return mat
 	}
 
@@ -43,7 +45,7 @@ class Material extends attribute.Attributable<Attribute, MaterialAttributeMap, A
 				_metallic: number = 0.1): Material {
 
 		let mat = new Material(gl)
-		mat.addAttribute(new Attribute('albedo', _albedo, attribute.validators.Vec3))
+		mat.addAttribute(new Attribute('albedo', _albedo, attribute.validators.Vec3OrTexture))
 		mat.addAttribute(new Attribute('roughness', _roughness, attribute.validators.Number))
 		mat.addAttribute(new Attribute('metallic', _metallic, attribute.validators.Number))
 		return mat

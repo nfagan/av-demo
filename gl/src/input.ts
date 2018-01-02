@@ -1,10 +1,11 @@
-import { Touch, Mouse, DoubleTapDetector } from './input-xy'
+import { Touch, Mouse, PointerLock, DoubleTapDetector } from './input-xy'
 import { Keyboard, Keys } from './keyboard'
 
 export {
 	Touch,
 	DoubleTapDetector,
 	Mouse,
+	PointerLock,
 	Keyboard,
 	Keys
 }

@@ -9,9 +9,11 @@ class Scene {
 	public models: Array<Model> = []
 	public lights: Array<Light.Light> = []
 	public modelsSorted: boolean = false
+	public background: Model
 
 	constructor(gl: WebGLRenderingContext) {
 		this.gl = gl
+		this.background = null
 	}
 
 	public sortModels(comparator: (a: Model, b: Model) => number) {

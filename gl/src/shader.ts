@@ -1,10 +1,14 @@
 import { mat4, vec3 } from 'gl-matrix'
 import { Resource } from './resource'
 import { vector, types } from './util'
+import { UniformNames, UniformMap } from './uniforms'
+import * as texture from './texture'
 
 type LocationMappable = {
 	[key: string]: WebGLUniformLocation
 }
+
+export type UniformSettable = number | boolean | mat4 | vec3 | Array<number> | texture.Texture
 
 enum ShaderTypes {
 	VERTEX,
@@ -13,7 +17,8 @@ enum ShaderTypes {
 
 type ShaderSource = {
 	source: string,
-	type: ShaderTypes
+	type: ShaderTypes,
+	uniforms: UniformNames[]
 }
 
 type ShaderProgramSource = {
@@ -58,6 +63,7 @@ class Shader extends Resource {
 	private source: string
 	private type: number
 	private shader?: WebGLShader
+	private uniforms: UniformMap<boolean>
 
 	public isValid: boolean
 
@@ -67,11 +73,16 @@ class Shader extends Resource {
 		this.source = src.source
 		this.type = Shader.getShaderType(gl, src.type)
 		this.isValid = true
+		this.uniforms = new UniformMap(src.uniforms, true)
 		this.setup()
 	}
 
 	public getGLShader(): WebGLShader {
 		return this.shader
+	}
+
+	public hasUniform(name: UniformNames): boolean {
+		return this.uniforms.hasUniform(name)
 	}
 
 	private setup(): void {
@@ -144,37 +155,56 @@ class ShaderProgram extends Resource {
 		this._isBound = false
 	}
 
+	public hasUniform(name: UniformNames) {
+		for (let shader of this.shaders) {
+			if (shader.hasUniform(name))
+				return true
+		}
+		return false
+	}
+
 	public isBound(): boolean {
 		return this._isBound
 	}
 
-	public setUniform(name: string, value: number | boolean | mat4 | vec3 | Array<number>) {
+	public setUniform(name: string, value: UniformSettable) {
 		if (typeof(value) == 'number') {
 			this.setf(name, value)
+
 		} else if (typeof(value) == 'boolean') {
 			this.setb(name, value)
+
 		} else if (Array.isArray(value)) {
 			this.setVec3f(name, value)
+
+		} else if (value instanceof texture.Texture) {
+			this.seti(name, value.index)
+
 		} else if (types.isMat4(value)) {
 			this.setMat4f(name, value)
+
 		} else if (types.isVec3(value)) {
 			this.setVec3f(name, value)
 		}
 	}
 
-	public setf(name: string, value: number): void {
+	private setf(name: string, value: number): void {
 		this.gl.uniform1f(this.getUniformLocation(name), value)
 	}
 
-	public setb(name: string, value: boolean): void {
+	private setb(name: string, value: boolean): void {
 		this.gl.uniform1i(this.getUniformLocation(name), value ? 1 : 0)
 	}
 
-	public setMat4f(name: string, value: mat4) {
+	private seti(name: string, value: number): void {
+		this.gl.uniform1i(this.getUniformLocation(name), value)
+	}
+
+	private setMat4f(name: string, value: mat4) {
 		this.gl.uniformMatrix4fv(this.getUniformLocation(name), false, value)
 	}
 
-	public setVec3f(name: string, value: vec3 | Array<number> | number) {
+	private setVec3f(name: string, value: vec3 | Array<number> | number) {
 		value = vector.requireVec3(value)
 		this.gl.uniform3fv(this.getUniformLocation(name), value)
 	}

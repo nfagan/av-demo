@@ -27,7 +27,7 @@ function getFarPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nModels: n
 }
 
 type fpsStatsT = {
-	el: HTMLElement,
+	el: HTMLElement | null,
 	stats: wgl.FrameStats
 	visible: boolean
 }

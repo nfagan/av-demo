@@ -1,7 +1,7 @@
 import * as _Keyboard from './keyboard'
 import * as XY from './input-xy'
 import { Camera, directions } from './camera'
-import { DeltaTimer, ratios } from './time-util'
+import { DeltaTimer, ratios, Ratio } from './time-util'
 import { vec2, vec3, vec4 } from 'gl-matrix'
 import * as math from './wgl-math'
 import { common, matrix } from './util'
@@ -12,8 +12,136 @@ export namespace Orbit {
 		nVelocitySamples: number,
 		velocityDecaySensitivity: number,
 		maxVelocity: number,
-		speed: number
+		speed: number,
+		smooth: boolean
 	}
+
+	export class Orbit2<K extends XY.XYEvent, T extends XY.xy<K>> {
+
+		private input: T
+		private camera: Camera
+		private timer: DeltaTimer
+
+		private released: boolean
+		private currentCoordinates: vec2
+		private tmpCurrentCoordinates: vec2
+		private lastCoordinates: vec2
+		private velocity: vec2
+		private totalVelocity: vec2
+		private delta: vec2
+		private dts: vec2
+		private opts: OrbitOpts
+
+		constructor(input: T, camera: Camera, opts?: OrbitOpts) {
+			this.input = input
+			this.camera = camera
+			this.timer = new DeltaTimer()
+
+			if (!opts)
+				opts = Orbit2.Defaults()
+
+			this.released = false
+			this.lastCoordinates = vec2.fromValues(0, 0)
+			this.currentCoordinates = vec2.fromValues(0, 0)
+			this.tmpCurrentCoordinates = vec2.fromValues(0, 0)
+			this.velocity = vec2.fromValues(0, 0)
+			this.totalVelocity = vec2.fromValues(0, 0)
+			this.delta = vec2.fromValues(0, 0)
+			this.dts = vec2.fromValues(0, 0)
+
+			this.opts = opts
+
+			this.timer.setRatio(ratios.ms())
+
+			this.setup()
+		}
+
+		public update() {
+			const input = this.input
+			const timer = this.timer
+			const camera = this.camera
+			const tmpCoords = this.tmpCurrentCoordinates
+			const coords = this.currentCoordinates
+			const lastCoords = this.lastCoordinates
+			const velocity = this.velocity
+			const totalVelocity = this.totalVelocity
+			const delta = this.delta
+			const dts = this.dts
+			const speedMultipler = this.opts.speed
+			const decaySens = this.opts.velocityDecaySensitivity
+
+			timer.update()
+
+			tmpCoords.set(coords)
+
+			vec2.subtract(delta, tmpCoords, lastCoords)
+
+			const dt = timer.delta()
+
+			dts[0] = dt
+			dts[1] = dt
+
+			if (dt > 0)
+				vec2.divide(velocity, delta, dts)
+
+			velocity[0] = Ratio.scale(timer.getRatio(), velocity[0])
+			velocity[1] = Ratio.scale(timer.getRatio(), velocity[1])
+
+			vec2.mul(velocity, velocity, [speedMultipler, speedMultipler])
+
+			vec2.add(totalVelocity, totalVelocity, velocity)
+
+			let targetVelocity = this.opts.smooth ? totalVelocity : velocity
+
+			if (input.shouldInvert()) {
+				camera.rotate(-targetVelocity[0], targetVelocity[1])
+			} else {
+				camera.rotate(targetVelocity[0], -targetVelocity[1])
+			}
+
+			lastCoords.set(tmpCoords)
+
+			totalVelocity[0] /= decaySens
+			totalVelocity[1] /= decaySens
+
+			if (Math.abs(totalVelocity[0]) < 0.00001) totalVelocity[0] = 0
+			if (Math.abs(totalVelocity[1]) < 0.00001) totalVelocity[1] = 0
+		}
+
+		private setup(): void {
+			const input = this.input
+			const self = this
+
+			input.start((evt: K) => {
+				self.released = false
+				self.currentCoordinates = self.input.getPrimaryCoordinates(evt)
+				self.lastCoordinates.set(self.currentCoordinates)
+			})
+
+			input.move((evt: K) => {
+				evt.preventDefault()
+				self.currentCoordinates = self.input.getPrimaryCoordinates(evt)
+			})
+
+			input.end((evt: K) => {
+				self.released = true
+			})
+		}
+
+		public static Defaults(): OrbitOpts {
+			return {
+				nVelocitySamples: 100,
+				velocityDecaySensitivity: 1.2,
+				maxVelocity: 4000,
+				speed: 2,
+				smooth: true
+			}
+		}
+	}
+
+	//
+	//	regular
+	//
 
 	abstract class _Orbit<T extends XY.XYEvent, X extends XY.xy<T>> {
 
@@ -54,6 +182,14 @@ export namespace Orbit {
 		protected abstract shouldBegin(evt: T): boolean
 		protected abstract getCoordinates(evt: T): vec2
 		public abstract shouldInvert(): boolean
+		public getMeanVelocity(): vec2 {
+			if (this.velocities.length > 0) {
+				this.meanVelocity = <vec2>math.vecmean(this.velocities)
+			} else {
+				this.meanVelocity = vec2.fromValues(0, 0)
+			}
+			return this.meanVelocity
+		}
 
 		private setup(): void {
 			const input = this.input
@@ -107,7 +243,8 @@ export namespace Orbit {
 				nVelocitySamples: 100,
 				velocityDecaySensitivity: 1.1,
 				maxVelocity: 4000,
-				speed: 4
+				speed: 4,
+				smooth: true
 			}
 		}
 	}
