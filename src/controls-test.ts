@@ -38,7 +38,7 @@ export async function main() {
 		throw new Error('Unable to initialize GL context.')
 
 	let firstObj = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/test:test.obj')
-	let firstTex = await wgl.Loaders.TEX.load2D(gl, '/tex/noodles.jpg')
+	let firstTex = await wgl.Loaders.TEX.load2D(gl, '/tex/neb.png')
 
 	const scene = new wgl.Scene(gl)
 	const renderer = new wgl.renderers.functional(gl)
