@@ -18,7 +18,7 @@ export type MeshLoadOpts = {
 export namespace OBJ {
 
     export function Defaults(): MeshLoadOpts {
-        return { finalize: false }
+        return { finalize: true }
     }
 
     export async function loadMesh(gl: WebGLRenderingContext, url: string, opts?: MeshLoadOpts): Promise<Mesh> {

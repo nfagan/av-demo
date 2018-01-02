@@ -2,7 +2,7 @@ import { vec3 } from 'gl-matrix'
 import { vector, types, attribute } from './util'
 import { Resource } from './resource'
 
-type AttributeNames = 'color' | 'position' | 'index' | 'mask' | 'direction'
+type AttributeNames = 'color' | 'position' | 'mask' | 'direction'
 type LightNames = 'point' | 'directional'
 type LightUniformNames = AttributeNames | LightNames
 
@@ -24,6 +24,7 @@ class Light extends attribute.Attributable<Attribute, LightAttributeMap, Attribu
 	gl: WebGLRenderingContext
 	private name: LightNames
 	public active: boolean = true
+	private index: number
 
 	constructor(gl: WebGLRenderingContext, 
 			_index: number = 0,  
@@ -31,8 +32,8 @@ class Light extends attribute.Attributable<Attribute, LightAttributeMap, Attribu
 			_mask: types.vec3Convertible = [1, 1, 1]) {
 		super()
 		this.gl = gl
+		this.index = _index
 		this.attributes = new LightAttributeMap()
-		this.addAttribute(new Attribute('index', _index, attribute.validators.Number))
 		this.addAttribute(new Attribute('color', _color, attribute.validators.Vec3))
 		this.addAttribute(new Attribute('mask', _mask, attribute.validators.Vec3))
 	}
@@ -43,10 +44,10 @@ class Light extends attribute.Attributable<Attribute, LightAttributeMap, Attribu
 		this.getAttribute('color').setValue(val)
 	}
 	public setIndex(val: number): void {
-		this.getAttribute('index').setValue(val)
+		this.index = val
 	}
 	public getIndex(): number {
-		return <number>this.getAttribute('index').peekValue()
+		return this.index
 	}
 	public getColor(): vec3 {
 		return <vec3>this.getAttribute('color').peekValue()

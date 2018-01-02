@@ -60,20 +60,17 @@ export async function main() {
 
 	const gl: WebGLRenderingContext = canvasElement.getContext('webgl')
 
-	if (!gl) throw new Error('Unable to initialize GL context.')
+	if (!gl) 
+		throw new Error('Unable to initialize GL context.')
 
-	// gl.depthFunc(gl.LEQUAL)
-
-	let firstObj = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/test:test.obj', {finalize: true})
+	let firstObj = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/test:test.obj')
 	let firstTex = await wgl.Loaders.TEX.load2D(gl, '/tex/noodles.jpg')
 
 	firstTex.create()
 
 	const scene = new wgl.Scene(gl)
 	const renderer = new wgl.renderers.functional(gl)
-	const light = wgl.Light.Light.Point(gl)
-	const light2 = wgl.Light.Light.Directional(gl)
-	const camera: wgl.Camera = new wgl.Camera()
+	const camera = new wgl.Camera()
 	const keyboardMoveControls = new wgl.Controls.Movement.Keyboard(keyboard, camera, 5.0)
 	const touchInput = new wgl.Input.Touch()
 	const mouseInput = new wgl.Input.PointerLock(canvas.element)
@@ -96,15 +93,17 @@ export async function main() {
 
 	renderer.setAspect(canvas.aspect)
 
+	const light = wgl.Light.Light.Point(gl)
+	const light2 = wgl.Light.Light.Directional(gl)
+
 	const prog: wgl.ShaderProgram = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.PBR1)
 	const skyboxProg = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.Skybox)
 
 	light.setColor([1, 0.5, 0.25])
 	light.getAttribute('position').setValue([0, 0, -2])
-	light.setIndex(0)
 
-	light2.setColor([1, 0, 0])
-	light2.getAttribute('direction').setValue([-20, -20, -20])
+	light2.setColor([0, 0, 1])
+	light2.getAttribute('direction').setValue([-30, -30, -30])
 
 	const sphere = wgl.MeshFactory.create(gl, 'sphere')
 	const plane = wgl.MeshFactory.create(gl, 'quad')
@@ -125,7 +124,7 @@ export async function main() {
 	sun.material.getAttribute('albedo').setValue(light2.getColor())
 	let dir = light2.getAttribute('direction').peekValue()
 	sun.setPosition(vec3.negate(vec3.create(), dir as vec3))
-	sun.setScale(5)
+	sun.setScale(10)
 
 	cottageModel.material.getAttribute('albedo').setValue([0, 1, 0])
 	cottageModel.setPosition([-5, -5, -5])

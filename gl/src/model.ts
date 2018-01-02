@@ -6,6 +6,8 @@ import { matrix, types, vector } from './util'
 import * as math from './wgl-math'
 import * as Material from './material'
 
+export type RenderCallbackT = () => void
+
 class Model extends Resource {
 
 	private gl: WebGLRenderingContext
@@ -23,6 +25,10 @@ class Model extends Resource {
 	private scale: vec3
 	private transform: matrix.transform
 
+	//	Events
+	public onBeforeRender: RenderCallbackT
+	public onAfterRender: RenderCallbackT
+
 	constructor(gl: WebGLRenderingContext, program: ShaderProgram, mesh: Mesh, material: Material.Material) {
 		super()
 		this.gl = gl
@@ -37,6 +43,9 @@ class Model extends Resource {
 
 		this.parent = null
 		this.children = {}
+
+		this.onBeforeRender = () => {}
+		this.onAfterRender = () => {}
 	}
 
 	public setMesh(mesh: Mesh): void { 

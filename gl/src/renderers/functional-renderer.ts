@@ -47,6 +47,7 @@ export default class extends base {
 	}
 
 	private drawModel(scene: Scene, camera: Camera, model: Model): void {
+		model.onBeforeRender()
 		const prog = model.program
 		const material = model.material
 		const mesh = model.mesh
@@ -57,6 +58,7 @@ export default class extends base {
 		this.configureTransform(prog, model.getWorldMatrix())
 		this.configureMaterial(prog, material)
 		this.draw(prog, mesh)
+		model.onAfterRender()
 	}
 
 	public draw(prog: Shader.ShaderProgram, mesh: Mesh): void {
@@ -103,13 +105,13 @@ export default class extends base {
 		let index = light.getIndex()
 		let attrs: Array<Light.Attribute> = light.enumerateAttributes()
 		for (let attr of attrs) {
-			if (attr.name === 'index')
-				continue
 			if (attr.isDirty) {
 				let un = uniforms.Map.getUniform(attr.name)
 				let mappedName = uniforms.Map.getUniform(light.getName())
 				let unf = `${mappedName}[${index}].${un}`
-				prog.setUniform(unf, attr.getValue())
+				if (prog.hasUniform(light.getName())) {
+					prog.setUniform(unf, attr.getValue())
+				}
 			}
 		}
 	}

@@ -28,7 +28,6 @@ export class Map {
 		'position': 'position',
 		'direction': 'direction',
 		'color': 'color',
-		'index': 'index',
 		'mask': 'mask',
 		'point': 'point_lights',
 		'directional': 'directional_lights',

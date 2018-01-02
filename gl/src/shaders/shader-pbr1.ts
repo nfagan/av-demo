@@ -189,6 +189,7 @@ namespace _sources {
 				bool is_directional = true;
 				vec3 res = PBR(v_normal, albedo, roughness, metallic, 
 					cam_position, v_position, directional_lights[i].direction, directional_lights[i].color, is_directional);
+				res *= directional_lights[i].mask;
 				Lo += res;
 			}
 
@@ -213,7 +214,8 @@ const PBR1: ShaderProgramSource = {
 		{
 			source: _sources.fragment,
 			type: ShaderTypes.FRAGMENT,
-			uniforms: ['point', 'direction', 'albedo', 'roughness', 'metallic', 'camera_position']
+			uniforms: ['point', 'directional', 'direction', 'position', 'color', 'mask',
+				 'albedo', 'roughness', 'metallic', 'camera_position']
 		}
 	]
 }
