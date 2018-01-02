@@ -60,6 +60,7 @@ export class Texture extends Resource {
 		this.data = data
 		this._exists = false
 		this._bound = false
+		this.create()
 	}
 
 	private configure2D(tex: WebGLTexture): void {

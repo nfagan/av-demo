@@ -2,6 +2,8 @@ import { Model } from './model'
 import { Mesh } from './mesh'
 import * as Light from './light'
 
+export type SceneAddable = Model | Light.Light
+
 class Scene {
 
 	private gl: WebGLRenderingContext
@@ -21,7 +23,18 @@ class Scene {
 		this.modelsSorted = true
 	}
 
-	public add(element: Model | Light.Light): void {
+	public add(element: SceneAddable | Array<SceneAddable>): void {
+		if (Array.isArray(element)) {
+			if (element.length === 0)
+				return
+			const self = this
+			element.map(el => self.addOne(el))
+		} else {
+			this.addOne(element)
+		}
+	}
+
+	private addOne(element: SceneAddable): void {
 		if (element instanceof Model) {
 			this.addModel(element)
 		} else if (element instanceof Light.Light) {

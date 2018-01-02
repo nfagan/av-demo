@@ -31,11 +31,20 @@ export class Keyboard {
 		return res === undefined ? false : res
 	}
 
-	public down(func: KeyboardEventCBT): void {
-		window.addEventListener('keydown', func)
+	public down(func: KeyboardEventCBT, key?: number): void {
+		this.listenerImpl(func, 'keydown', key)
 	}
 
-	public up(func: KeyboardEventCBT): void {
-		window.addEventListener('keyup', func)
+	public up(func: KeyboardEventCBT, key?: number): void {
+		this.listenerImpl(func, 'keyup', key)
+	}
+
+	private listenerImpl(func: KeyboardEventCBT, kind: string, key?: number): void {
+		let anyKey = key === undefined || key === null
+		window.addEventListener(kind, (evt: KeyboardEvent) => {
+			if (anyKey || evt.keyCode === key) {
+				func(evt)
+			}
+		})
 	}
 }

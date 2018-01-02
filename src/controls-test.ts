@@ -2,30 +2,6 @@ import * as wgl from '../gl/src/web-gl'
 import * as waud from '../aud/src/web-audio'
 import { mat4, vec3, glMatrix } from 'gl-matrix'
 
-function getPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nLevels: number): Array<wgl.Model> {
-	let planeModels = []
-	for (let i: number = 0; i < nLevels; i++) {
-		let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material.clone())
-		planeModel.setPosition([0, -i-1, 0])
-		planeModel.setRotation([90, 0, 0])
-		planeModels.push(planeModel)
-	}
-	return planeModels
-}
-
-function getFarPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nModels: number): Array<wgl.Model> {
-	let planeModels: Array<wgl.Model> = []
-	for (let i: number = 0; i < nModels; i++) {
-		for (let j: number = 0; j < nModels; j++) {
-			let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material.clone())
-			planeModel.setPosition([i/2, j/2, -10])
-			planeModel.setScale(0.5)
-			planeModels.push(planeModel)
-		}
-	}
-	return planeModels
-}
-
 export async function main() {
 
 	//	audio init
@@ -41,7 +17,7 @@ export async function main() {
 
 	const destination = analyser.getAnalyserNode()
 
-	const player = () => audioManager.togglePlay(files[0], destination)
+	const togglePlay = () => audioManager.togglePlay(files[0], destination)
 
 	//	end autio init
 
@@ -54,9 +30,7 @@ export async function main() {
 	const canvasElement = canvas.element
 	const frameStats = new wgl.FrameStats()
 
-	keyboard.down((evt) => {
-		if (evt.keyCode == wgl.Input.Keys.space) player()
-	})
+	keyboard.down(evt => togglePlay(), wgl.Input.Keys.space)
 
 	const gl: WebGLRenderingContext = canvasElement.getContext('webgl')
 
@@ -66,30 +40,25 @@ export async function main() {
 	let firstObj = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/test:test.obj')
 	let firstTex = await wgl.Loaders.TEX.load2D(gl, '/tex/noodles.jpg')
 
-	firstTex.create()
-
 	const scene = new wgl.Scene(gl)
 	const renderer = new wgl.renderers.functional(gl)
 	const camera = new wgl.Camera()
 	const keyboardMoveControls = new wgl.Controls.Movement.Keyboard(keyboard, camera, 5.0)
 	const touchInput = new wgl.Input.Touch()
 	const mouseInput = new wgl.Input.PointerLock(canvas.element)
-	// const mouseInput = new wgl.Input.Mouse()
+	const touchMoveControls = new wgl.Controls.Movement.Touch(touchInput, camera, 25.0)
 
 	let rotationControls: any
-	let rotationControlOpts = wgl.Controls.Orbit.Orbit2.Defaults()
-	rotationControlOpts.smooth = true
 
 	if (wgl.capabilities.hasPointerLock()) {
-		rotationControls = new wgl.Controls.Orbit.Orbit2(mouseInput, camera, rotationControlOpts)
+		rotationControls = new wgl.Controls.Orbit.Orbit2(mouseInput, camera)
 	} else {
 		rotationControls = new wgl.Controls.Orbit.Orbit(touchInput, camera)
 	}
 
-	const touchMoveControls = new wgl.Controls.Movement.Touch(touchInput, camera, 25.0)
 	// const touchRotateControls = new wgl.Controls.Rotation.Touch(touchInput, camera, 25.0)
 
-	canvas.element.onclick = (evt) => audioManager.togglePlay(files[0], destination)
+	canvas.element.onclick = evt => togglePlay()
 
 	renderer.setAspect(canvas.aspect)
 
@@ -138,21 +107,18 @@ export async function main() {
 	farPlaneModels.map(model => model.setMesh(cubeMesh))
 	let farPlanePositions = farPlaneModels.map(model => model.getPosition())
 
-	farPlaneModels.map(model => scene.add(model))
-	farPlaneModels.map(model => anchor.addChild(model))
+	scene.add(farPlaneModels)
+	scene.add([light, light2])
 	scene.add(cottageModel)
 
-	scene.add(light)
-	scene.add(light2)
 	scene.add(sun)
+	scene.add(sphereModel)
 
 	scene.background = skybox
 
+	farPlaneModels.map(model => anchor.addChild(model))
+
 	sphereModel.setPosition([-5, -5, 0])
-
-	scene.add(sphereModel)
-
-	let sphereModelPos = sphereModel.getPosition()
 
 	camera.setPosition([30, 8, 31])
 	camera.setPitch(-17)
@@ -198,4 +164,28 @@ export async function main() {
 	}
 
 	animate()
+}
+
+function getPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nLevels: number): Array<wgl.Model> {
+	let planeModels = []
+	for (let i: number = 0; i < nLevels; i++) {
+		let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material.clone())
+		planeModel.setPosition([0, -i-1, 0])
+		planeModel.setRotation([90, 0, 0])
+		planeModels.push(planeModel)
+	}
+	return planeModels
+}
+
+function getFarPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nModels: number): Array<wgl.Model> {
+	let planeModels: Array<wgl.Model> = []
+	for (let i: number = 0; i < nModels; i++) {
+		for (let j: number = 0; j < nModels; j++) {
+			let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material.clone())
+			planeModel.setPosition([i/2, j/2, -10])
+			planeModel.setScale(0.5)
+			planeModels.push(planeModel)
+		}
+	}
+	return planeModels
 }
