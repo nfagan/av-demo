@@ -1,4 +1,3 @@
 //	camera -- move projection matrix to camera
-//	camera-controls -- re-architect controls based on update() loop
 //	mesh -- examine issue where mesh's lacking uvs are not loaded correctly.
 //	obj-loader -- use hashed indices rather than inserting a new vertex each time.
