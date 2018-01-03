@@ -1,4 +1,4 @@
-import { Resource } from './resource'
+import { Resource } from '../common/resource'
 import * as types from './type-util'
 import * as common from './common-util'
 

@@ -1,7 +1,7 @@
-import { time } from './util'
+import { time } from '../util/util'
 import { vec2 } from 'gl-matrix'
-import * as math from './wgl-math'
-import * as capabilities from './capabilities'
+import * as math from '../math/wgl-math'
+import * as capabilities from '../common/capabilities'
 
 export type TouchCBT = (evt: TouchEvent) => void
 export type MouseCBT = (evt: MouseEvent) => void

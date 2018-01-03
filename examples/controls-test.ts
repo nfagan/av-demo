@@ -1,6 +1,6 @@
 import * as wgl from '../gl/web-gl'
 import * as waud from '../aud/web-audio'
-import { mat4, vec3, glMatrix } from 'gl-matrix'
+import { mat4, quat, vec3, glMatrix } from 'gl-matrix'
 
 export async function main() {
 

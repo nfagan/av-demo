@@ -1,6 +1,6 @@
-import { Model } from './model'
-import { Mesh } from './mesh'
-import * as Light from './light'
+import { Model } from '../model/model'
+import { Mesh } from '../mesh/mesh'
+import * as Light from '../light/light'
 
 export type SceneAddable = Model | Light.Light
 

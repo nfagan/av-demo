@@ -1,8 +1,8 @@
 import { mat4, vec3 } from 'gl-matrix'
-import { Resource } from './resource'
-import { vector, types } from './util'
+import { Resource } from '../common/resource'
+import { vector, types } from '../util/util'
 import { UniformNames, UniformMap } from './uniforms'
-import * as texture from './texture'
+import * as texture from '../texture/texture'
 
 type LocationMappable = {
 	[key: string]: WebGLUniformLocation

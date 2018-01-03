@@ -1,10 +1,10 @@
 import * as _Keyboard from './keyboard'
 import * as XY from './input-xy'
-import { Camera, directions } from './camera'
-import { DeltaTimer, ratios, Ratio } from './time-util'
+import { Camera, directions } from '../camera/camera'
+import { DeltaTimer, ratios, Ratio } from '../util/time-util'
 import { vec2, vec3, vec4 } from 'gl-matrix'
-import * as math from './wgl-math'
-import { common, matrix } from './util'
+import * as math from '../math/wgl-math'
+import { common, matrix } from '../util/util'
 
 export namespace Orbit {
 

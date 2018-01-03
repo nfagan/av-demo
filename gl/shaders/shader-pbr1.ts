@@ -1,4 +1,4 @@
-import { ShaderSource, ShaderProgramSource, ShaderTypes } from '../shader'
+import { ShaderSource, ShaderProgramSource, ShaderTypes } from '../shader/shader'
 
 namespace _sources {
 	export const vertex: string = `

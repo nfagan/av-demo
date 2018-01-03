@@ -1,6 +1,6 @@
 import { vec3 } from 'gl-matrix'
-import { vector, types, attribute } from './util'
-import { Resource } from './resource'
+import { vector, types, attribute } from '../util/util'
+import { Resource } from '../common/resource'
 
 type AttributeNames = 'color' | 'position' | 'mask' | 'direction'
 type LightNames = 'point' | 'directional'

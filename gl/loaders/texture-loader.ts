@@ -1,4 +1,4 @@
-import * as Texture from '../texture'
+import * as Texture from '../texture/texture'
 
 export namespace TEX {
 

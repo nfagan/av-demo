@@ -1,7 +1,7 @@
 import { Vertex, Topologies } from './vertex'
 import { Mesh } from './mesh'
 import { MeshLibrary } from './mesh-library'
-import * as math from './wgl-math'
+import * as math from '../math/wgl-math'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Creating_3D_objects_using_WebGL
 

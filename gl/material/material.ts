@@ -1,6 +1,6 @@
 import { vec3 } from 'gl-matrix'
-import { types, vector, attribute, common } from './util'
-import * as texture from './texture'
+import { types, vector, attribute, common } from '../util/util'
+import * as texture from '../texture/texture'
 
 type AttributeNames = 'roughness' | 'albedo' | 'metallic'
 type ValidatorT = (attr: Attribute, data: SetT) => void

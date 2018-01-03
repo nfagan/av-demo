@@ -1,10 +1,10 @@
-import { Resource } from './resource'
-import { Mesh } from './mesh'
+import { Resource } from '../common/resource'
+import { Mesh } from '../mesh/mesh'
 import { mat4, vec3, glMatrix } from 'gl-matrix'
-import { ShaderProgram } from './shader'
-import { matrix, types, vector } from './util'
-import * as math from './wgl-math'
-import * as Material from './material'
+import { ShaderProgram } from '../shader/shader'
+import { matrix, types, vector } from '../util/util'
+import * as math from '../math/wgl-math'
+import * as Material from '../material/material'
 
 export type RenderCallbackT = () => void
 

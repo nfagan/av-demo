@@ -1,4 +1,4 @@
-import { time } from './util'
+import { time } from '../util/util'
 
 class FrameStats {
 

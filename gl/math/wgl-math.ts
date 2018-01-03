@@ -1,5 +1,5 @@
 import * as glm from 'gl-matrix'
-import { vector, types } from './util'
+import { vector, types } from '../util/util'
 
 export function clamp<T extends Float32Array>(val: T, min: number, max: number): void {
 	for (let i: number = 0; i < val.length; i++) {

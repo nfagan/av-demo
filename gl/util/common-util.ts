@@ -1,6 +1,6 @@
 import * as types from './type-util'
 import * as glm from 'gl-matrix'
-import { Texture } from './texture'
+import { Texture } from '../texture/texture'
 
 function cloneGLMArray(data: types.glmArray): types.glmArray {
 	if (types.isMat4(data)) {

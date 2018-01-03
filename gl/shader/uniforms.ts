@@ -1,6 +1,6 @@
-import { types } from './util'
-import * as _Light from './light'
-import * as _Material from './material'
+import { types } from '../util/util'
+import * as _Light from '../light/light'
+import * as _Material from '../material/material'
 import * as _Shader from './shader'
 
 export type UniformNames = _Material.AttributeNames | _Light.LightUniformNames | _Shader.ShaderCoreUniformKinds

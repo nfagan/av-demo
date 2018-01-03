@@ -1,5 +1,5 @@
 import { mat4, vec2, vec3, glMatrix } from 'gl-matrix'
-import * as texture from './texture'
+import * as texture from '../texture/texture'
 
 export type arrayPrimitive = Array<number>
 export type arrayLike = Array<number> | Float32Array

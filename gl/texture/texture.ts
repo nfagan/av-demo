@@ -1,6 +1,6 @@
-import * as defaults from './default-util'
-import * as math from './wgl-math'
-import { Resource } from './resource'
+import * as defaults from '../util/default-util'
+import * as math from '../math/wgl-math'
+import { Resource } from '../common/resource'
 
 export type DataTypes = HTMLImageElement | Uint8Array | null
 

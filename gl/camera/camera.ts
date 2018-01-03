@@ -1,6 +1,6 @@
 import { quat, mat4, vec3, glMatrix } from 'gl-matrix'
-import { vector, types } from './util'
-import * as math from './wgl-math'
+import { vector, types } from '../util/util'
+import * as math from '../math/wgl-math'
 
 type directions = 'forwards' | 'backwards' | 'left' | 'right'
 

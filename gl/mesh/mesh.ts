@@ -1,6 +1,6 @@
 import { Vertex, Topologies } from './vertex'
-import { Resource } from './resource'
-import { ShaderProgram, ShaderAttributeKinds } from './shader'
+import { Resource } from '../common/resource'
+import { ShaderProgram, ShaderAttributeKinds } from '../shader/shader'
 
 class Mesh extends Resource {
 
