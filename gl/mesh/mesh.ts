@@ -10,6 +10,7 @@ class Mesh extends Resource {
 	private ebo: WebGLBuffer
 	private isFinalized: boolean = false
 	private _isBound: boolean = false
+	private boundTo: string = ''
 
 	private vertices: Array<Vertex> = []
 	private indices: Uint16Array = new Uint16Array(0)
@@ -77,6 +78,10 @@ class Mesh extends Resource {
 		return this._isBound
 	}
 
+	public isBoundTo(prog: ShaderProgram): boolean {
+		return this.boundTo === prog.uuid
+	}
+
 	public bind(program: ShaderProgram): void {
 		this.assertFinalized('bind')
 		if (this.vertices.length === 0)
@@ -101,17 +106,21 @@ class Mesh extends Resource {
 		//	uv
 		if (vert0.sizeUV() > 0) {
 			let uvLoc: number = program.getAttributeLocation('uv')
-			gl.enableVertexAttribArray(uvLoc)
-			gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, stride*bytes, offset*bytes)
-			offset += 2
+			if (uvLoc !== -1) {
+				gl.enableVertexAttribArray(uvLoc)
+				gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, stride*bytes, offset*bytes)
+				offset += 2
+			}
 		}
 
 		//	normals
 		if (vert0.sizeNormal() > 0) {
 			let normLoc: number = program.getAttributeLocation('normal')
-			gl.enableVertexAttribArray(normLoc)
-			gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, stride*bytes, offset*bytes)
-			offset += 3
+			if (normLoc !== -1) {
+				gl.enableVertexAttribArray(normLoc)
+				gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, stride*bytes, offset*bytes)
+				offset += 3
+			}
 		}
 
 		//	indices
@@ -120,6 +129,7 @@ class Mesh extends Resource {
 		}
 
 		this._isBound = true
+		this.boundTo = program.uuid
 	}
 
 	public unbind(): void {
@@ -130,6 +140,7 @@ class Mesh extends Resource {
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null)
 		}
 		this._isBound = false
+		this.boundTo = ''
 	}
 
 	public dispose(): void {

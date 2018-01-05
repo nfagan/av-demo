@@ -10,14 +10,20 @@ namespace _sources {
 		uniform mat4 view;
 		uniform mat4 projection;
 
+		uniform mat4 light_space_transform;
+
 		varying mediump vec3 v_position;
 		varying mediump vec2 v_uv;
 		varying mediump vec3 v_normal;
 
+		varying mediump vec4 v_light_space_position;
+
 		void main() {
-			v_position = vec3(model * vec4(in_position, 1.0));
+			vec4 v4_position = vec4(in_position, 1.0);
+			v_position = vec3(model * v4_position);
 			v_uv = in_uv;
 			v_normal = in_normal;
+			v_light_space_position = light_space_transform * model * v4_position;
 			gl_Position = projection * view * model * vec4(in_position, 1.0);
 		}
 	`
@@ -139,10 +145,58 @@ namespace _sources {
 		    return ggx1 * ggx2;
 		}
 
+		//
+		//	shadow stuff
+		//
+
+		float calculate_shadows(vec4 light_space_position, sampler2D depth_tex, float texture_size, float bias) {
+			vec3 proj_coords = light_space_position.xyz / light_space_position.w;
+			vec2 texel_size = vec2(1.0 / texture_size);
+			proj_coords = proj_coords * 0.5 + 0.5;
+
+			float shadow = 0.0;
+
+			for (int x = -1; x <= 1; ++x) {
+				for (int y = -1; y <= 1; ++y) {
+					float nearest = texture2D(depth_tex, proj_coords.xy + (vec2(x, y) * texel_size)).r;
+					float test = proj_coords.z;
+					shadow += (test - bias > nearest ? 0.0 : 1.0);
+				}
+			}
+
+			return shadow / 9.0;
+		}
+
+		vec2 gauss_filter[7];
+
+		float calculate_shadows_gauss(vec4 light_space_position, sampler2D depth_tex, float texture_size, float bias) {
+			vec3 proj_coords = light_space_position.xyz / light_space_position.w;
+			proj_coords = proj_coords * 0.5 + 0.5;
+			float shadow = 0.0;
+			float scale = 0.005;
+			for(int i = 0; i < 7; i++) {
+				float test = proj_coords.z;
+				float nearest = texture2D(depth_tex, (proj_coords.xy + gauss_filter[i].y * scale)).r;
+				shadow += (test - bias > nearest ? 0.0 : 1.0);
+			}
+			return shadow / 7.0;
+		}
+
+		void setup_gauss_filter() {
+			gauss_filter[0] = vec2(-3.0, 0.015625);
+			gauss_filter[1] = vec2(-2.0, 0.09375);
+			gauss_filter[2] = vec2(-1.0, 0.234375);
+			gauss_filter[3] = vec2(0.0,	0.3125);
+			gauss_filter[4] = vec2(1.0,	0.234375);
+			gauss_filter[5] = vec2(2.0,	0.09375);
+			gauss_filter[6] = vec2(3.0,	0.015625);
+		}
+
 		struct PointLight {
 			vec3 position;
 			vec3 color;
 			vec3 mask;
+			bool casts_shadow;
 		};
 
 		struct DirectionalLight {
@@ -151,7 +205,7 @@ namespace _sources {
 			vec3 mask;
 		};
 
-		const int n_point_lights = 2;
+		const int n_point_lights = 1;
 		const int n_directional_lights = 1;
 
 		uniform PointLight point_lights[n_point_lights];
@@ -159,15 +213,29 @@ namespace _sources {
 
 		uniform vec3 cam_position;
 
+		//	shadow stuff
+		uniform sampler2D shadow_depth_map;
+		uniform float shadow_size;
+
 		uniform vec3 albedo;
 		uniform float roughness;
 		uniform float metallic;
+
+		varying mediump vec4 v_light_space_position;
 
 		varying mediump vec3 v_position;
 		varying mediump vec2 v_uv;
 		varying mediump vec3 v_normal;
 
 		void main() {
+
+			//	shadow stuff
+
+			setup_gauss_filter();
+
+			float shadow1 = calculate_shadows(v_light_space_position, shadow_depth_map, shadow_size, 0.005);
+
+			//	regular stuff
 
 			vec3 final_color = albedo;
 
@@ -180,6 +248,7 @@ namespace _sources {
 				vec3 res = PBR(v_normal, albedo, roughness, metallic, 
 					cam_position, v_position, point_lights[i].position, point_lights[i].color, is_directional);
 				res *= point_lights[i].mask;
+				res *= shadow1;
 				Lo += res;
 			}
 
@@ -204,7 +273,7 @@ namespace _sources {
 	`
 }
 
-const PBR1: ShaderProgramSource = {
+const UseShadows1: ShaderProgramSource = {
 	sources: [
 		{
 			source: _sources.vertex,
@@ -220,4 +289,4 @@ const PBR1: ShaderProgramSource = {
 	]
 }
 
-export { PBR1 }
+export { UseShadows1 }

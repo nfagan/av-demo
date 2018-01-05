@@ -196,7 +196,7 @@ class ShaderProgram extends Resource {
 		this.gl.uniform1i(this.getUniformLocation(name), value ? 1 : 0)
 	}
 
-	private seti(name: string, value: number): void {
+	public seti(name: string, value: number): void {
 		this.gl.uniform1i(this.getUniformLocation(name), value)
 	}
 

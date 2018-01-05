@@ -21,6 +21,12 @@ export default class extends base {
 		super(gl)
 	}
 
+	public reset(): void {
+		this.lastMesh = null
+		this.lastProgram = null
+		this.lastMaterial = null
+	}
+
 	public render(scene: Scene, camera: Camera) {
 		this.clear()
 
@@ -46,24 +52,26 @@ export default class extends base {
 		gl.depthFunc(gl.LESS)
 	}
 
-	private drawModel(scene: Scene, camera: Camera, model: Model): void {
+	public drawModel(scene: Scene, camera: Camera, model: Model): void {
 		model.onBeforeRender()
 		const prog = model.program
 		const material = model.material
 		const mesh = model.mesh
+		let forceUpdate = false
 		if (this.conditionalBindProgram(prog)) {
+			forceUpdate = true
 			this.configureCamera(prog, camera)
-			this.configureLights(prog, scene.lights)
+			this.configureLights(prog, scene.lights, forceUpdate)
 		}
 		this.configureTransform(prog, model.getWorldMatrix())
-		this.configureMaterial(prog, material)
-		this.draw(prog, mesh)
+		this.configureMaterial(prog, material, forceUpdate)
+		this.draw(prog, mesh, forceUpdate)
 		model.onAfterRender()
 	}
 
-	public draw(prog: Shader.ShaderProgram, mesh: Mesh): void {
+	public draw(prog: Shader.ShaderProgram, mesh: Mesh, force: boolean = false): void {
 		this.conditionalBindProgram(prog)
-		this.conditionalBindMesh(prog, mesh)
+		this.conditionalBindMesh(prog, mesh, force)
 		mesh.draw()
 	}
 
@@ -79,12 +87,12 @@ export default class extends base {
 		this.conditionalSetUniform(prog, 'camera_position', camera.position)
 	}
 
-	public configureMaterial(prog: Shader.ShaderProgram, material: Material.Material): void {
-		this.conditionalBindProgram(prog)
-		let isNew = this.checkNewMaterial(material)
+	public configureMaterial(prog: Shader.ShaderProgram, material: Material.Material, force: boolean = false): void {
+		let isNewProg = this.conditionalBindProgram(prog)
+		let isNewMat = this.checkNewMaterial(material)
 		let attrs: Array<Material.Attribute> = material.enumerateAttributes()
 		for (let attr of attrs) {
-			if (isNew || attr.isDirty) {
+			if (isNewMat || isNewProg || force || attr.isDirty) {
 				this.conditionalSetUniform(prog, attr.name, attr.getValue())
 			}
 			if (types.isTexture(attr.peekValue())) {
@@ -98,14 +106,13 @@ export default class extends base {
 		tex.bind()
 	}
 
-	public configureLight(prog: Shader.ShaderProgram, light: Light.Light): void {
-		this.conditionalBindProgram(prog)
-		let active: boolean = light.active
-		if (!active) return
+	public configureLight(prog: Shader.ShaderProgram, light: Light.Light, force: boolean = false): void {
+		let isNewProg = this.conditionalBindProgram(prog)
+		if (!light.active) return
 		let index = light.getIndex()
 		let attrs: Array<Light.Attribute> = light.enumerateAttributes()
 		for (let attr of attrs) {
-			if (attr.isDirty) {
+			if (isNewProg || force || attr.isDirty) {
 				let un = uniforms.Map.getUniform(attr.name)
 				let mappedName = uniforms.Map.getUniform(light.getName())
 				let unf = `${mappedName}[${index}].${un}`
@@ -116,9 +123,9 @@ export default class extends base {
 		}
 	}
 
-	private configureLights(prog: Shader.ShaderProgram, lights: Array<Light.Light>): void {
+	private configureLights(prog: Shader.ShaderProgram, lights: Array<Light.Light>, force: boolean = false): void {
 		for (let light of lights) {
-			this.configureLight(prog, light)
+			this.configureLight(prog, light, force)
 		}
 	}
 
@@ -130,20 +137,21 @@ export default class extends base {
 		return isNewMaterial
 	}
 
-	private conditionalBindMesh(prog: Shader.ShaderProgram, mesh: Mesh): boolean {
-		let isNullLastMesh: boolean = this.lastMesh === null
-		let isNewMesh: boolean = isNullLastMesh || !Mesh.equals(mesh, this.lastMesh)
+	public conditionalBindMesh(prog: Shader.ShaderProgram, mesh: Mesh, force: boolean = false): boolean {
+		let isNullLastMesh = this.lastMesh === null
+		let isNewBoundProg = !mesh.isBoundTo(prog)
+		let isNewMesh = force || isNullLastMesh || !Mesh.equals(mesh, this.lastMesh) || isNewBoundProg
 		if (isNewMesh) {
 			if (!isNullLastMesh && this.lastMesh.isBound()) this.lastMesh.unbind()
-			if (!mesh.isBound()) mesh.bind(prog)
+			if (!mesh.isBound() || isNewBoundProg) mesh.bind(prog)
 		}
 		this.lastMesh = mesh
 		return isNewMesh
 	}
 
-	private conditionalBindProgram(prog: Shader.ShaderProgram): boolean {
-		let isNullLastProgram: boolean = this.lastProgram === null
-		let isNewProgram: boolean = isNullLastProgram || !Shader.ShaderProgram.equals(prog, this.lastProgram)
+	public conditionalBindProgram(prog: Shader.ShaderProgram, force: boolean = false): boolean {
+		let isNullLastProgram = this.lastProgram === null
+		let isNewProgram = force || isNullLastProgram || !Shader.ShaderProgram.equals(prog, this.lastProgram)
 		if (isNewProgram) {
 			if (!isNullLastProgram && this.lastProgram.isBound()) this.lastProgram.unbind()
 			if (!prog.isBound()) prog.bind()

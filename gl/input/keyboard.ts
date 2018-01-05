@@ -9,7 +9,8 @@ export enum Keys {
 	Right = 39,
 	Up = 38,
 	Down = 40,
-	space = 32
+	space = 32,
+	shift = 16,
 }
 
 export class Keyboard {

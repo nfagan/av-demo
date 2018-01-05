@@ -15,6 +15,9 @@ export class TextureOpts {
 	dataType: number
 	wrapS: number
 	wrapT: number
+	generateMips: boolean
+	minFilter: number
+	magFilter: number
 
 	public static Default2D(gl: WebGLRenderingContext): TextureOpts {
 		let opts = new TextureOpts()
@@ -27,6 +30,9 @@ export class TextureOpts {
 		opts.dataType = gl.UNSIGNED_BYTE
 		opts.wrapS = gl.CLAMP_TO_EDGE
 		opts.wrapT = gl.CLAMP_TO_EDGE
+		opts.minFilter = gl.LINEAR
+		opts.magFilter = gl.LINEAR
+		opts.generateMips = true
 		return opts
 	}
 }
@@ -64,11 +70,24 @@ export class Texture extends Resource {
 	}
 
 	private configure2D(tex: WebGLTexture): void {
-		if (this.data === null || this.data instanceof Uint8Array) {
-			this.configure2DData(<any>this.data, tex)
+
+		const data = this.data
+		const opts = this.opts
+		const gl = this.gl
+
+		if (data === null || data instanceof Uint8Array) {
+			this.configure2DData(<any>data, tex)
 		} else {
-			this.configure2DImage(this.data, tex)
+			this.configure2DImage(data, tex)
 		}
+
+		if (opts.generateMips && math.isPow2(opts.width) && math.isPow2(opts.height)) {
+			gl.generateMipmap(gl.TEXTURE_2D)
+		} else {
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, opts.wrapS)
+	    	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, opts.wrapT)
+	    	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, opts.minFilter)
+	    }
 	}
 
 	private configure2DImage(data: HTMLImageElement, tex: WebGLTexture): void {
@@ -76,14 +95,8 @@ export class Texture extends Resource {
 		const gl = this.gl
 		gl.texImage2D(gl.TEXTURE_2D, opts.level, opts.internalFormat, 
 			opts.sourceFormat, opts.dataType, data)
-
-		if (math.isPow2(data.width) && math.isPow2(data.height)) {
-			gl.generateMipmap(gl.TEXTURE_2D)
-		} else {
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, opts.wrapS)
-	    	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, opts.wrapT)
-	    	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	    }
+		opts.width = data.width
+		opts.height = data.height
 	}
 
 	private configure2DData(data: Uint8Array | null, tex: WebGLTexture): void {

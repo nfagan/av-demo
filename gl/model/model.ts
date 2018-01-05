@@ -25,6 +25,8 @@ class Model extends Resource {
 	private scale: vec3
 	private transform: matrix.transform
 
+	public order: number
+
 	//	Events
 	public onBeforeRender: RenderCallbackT
 	public onAfterRender: RenderCallbackT
@@ -40,6 +42,7 @@ class Model extends Resource {
 		this.scale = vec3.fromValues(1, 1, 1)
 		this.alias = ''
 		this.transform = new matrix.transform
+		this.order = 0
 
 		this.parent = null
 		this.children = {}
@@ -95,10 +98,6 @@ class Model extends Resource {
 			.mat()
 	}
 
-	public static compareMeshUUID(a: Model, b: Model): number {
-		return Mesh.compareUUID(a.mesh, b.mesh)
-	}
-
 	public addChild(model: Model): void {
 		this.children[model.uuid] = model
 		model.parent = this
@@ -114,6 +113,23 @@ class Model extends Resource {
 		}
 		this.children[model.uuid] = undefined
 		model.parent = null
+	}
+
+	public static compareMeshUUID(a: Model, b: Model): number {
+		return Mesh.compareUUID(a.mesh, b.mesh)
+	}
+
+	public static compareOrder(a: Model, b: Model): number {
+		if (a.uuid === b.uuid)
+			return 0
+		return a.order > b.order ? 1 : -1
+	}
+
+	public static compareOrderThenMeshUUID(a: Model, b: Model): number {
+		let res = Model.compareOrder(a, b)
+		if (res !== 0)
+			return res
+		return Model.compareMeshUUID(a, b)
 	}
 
 }

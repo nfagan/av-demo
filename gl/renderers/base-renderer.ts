@@ -1,4 +1,6 @@
 import { mat4, vec3 } from 'gl-matrix'
+import * as types from '../util/type-util'
+import * as vector from '../util/vector-util'
 
 export default class {
 
@@ -9,6 +11,7 @@ export default class {
 	protected near: number = 0.1
 	protected far: number = 1000.0
 	protected aspect: number = 1.0
+	protected clearBits: number
 
 	constructor(gl: WebGLRenderingContext) {
 		this.gl = gl
@@ -20,6 +23,11 @@ export default class {
 	protected setup(): void {
 		const gl = this.gl
 		gl.enable(gl.DEPTH_TEST)
+		this.clearBits = gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
+	}
+
+	public setClearBits(bits: number | null) {
+		this.clearBits = bits
 	}
 
 	public setNearFar(near: number, far: number): void {
@@ -28,11 +36,17 @@ export default class {
 		this.projection = this.getProjectionMatrix()
 	}
 
+	public setClearColor(color: types.vec3Convertible): void {
+		this.clearColor = vector.requireVec3(color)
+	}
+
 	public clear(): void {
 		const gl = this.gl
 		const cc = this.clearColor
+		const cb = this.clearBits
 		gl.clearColor(cc[0], cc[1], cc[2], 1.0)
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		if (cb !== null)
+			gl.clear(cb)
 	}
 
 	public setAspect(ar: number) {

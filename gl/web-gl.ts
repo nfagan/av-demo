@@ -19,6 +19,7 @@ import * as Loaders from './loaders/loaders'
 import * as Input from './input/input'
 import * as Controls from './input/camera-controls'
 import * as capabilities from './common/capabilities'
+import * as texture from './texture/texture'
 
 export {
 	capabilities,
@@ -47,5 +48,6 @@ export {
 	ShaderProgram,
 	ShaderLibrary,
 	ShaderFactory,
+	texture,
 	util
 }
