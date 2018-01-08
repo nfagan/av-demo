@@ -10,6 +10,29 @@ function cloneGLMArray(data: types.glmArray): types.glmArray {
 	}
 }
 
+export function ensureArray<T>(val: T | Array<T>) : Array<T> {
+	if (!Array.isArray(val))
+		val = [val]
+	return val
+}
+
+export function unsafeHash(data: string): number {
+	// https://stackoverflow.com/questions/6122571/simple-non-secure-hash-function-for-javascript
+    let hash = 0
+    if (data.length === 0)
+    	return hash
+    for (let i = 0; i < data.length; i++) {
+    	let char = data.charCodeAt(i)
+    	hash = ((hash<<5) - hash) + char
+        hash = hash & hash
+    }
+    return hash
+}
+
+export function unsafeHashFunc(data: Function): number {
+	return unsafeHash(data.toString())
+}
+
 export function clone(data: types.cloneable) : types.cloneable {
 	if (types.isPrimitive(data)) {
 		return data

@@ -2,101 +2,49 @@ import * as wgl from '../gl/web-gl'
 import * as waud from '../aud/web-audio'
 import { mat4, quat, vec3, vec4, glMatrix } from 'gl-matrix'
 
-type FBO = { fbo: WebGLFramebuffer, texture: wgl.texture.Texture }
+function configureVolumeFBO(gl: WebGLRenderingContext, w: number, h: number): wgl.fbo.FBO {
 
-function checkFBO(gl: WebGLRenderingContext): void {
+	const opts = wgl.texture.Factory.makeVolume(gl, w, h)
+	const tex = new wgl.texture.Texture(gl, null, opts)
+	const fbo = new wgl.fbo.FBO(gl)
 
-	let status = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
+	fbo.bind()
+	fbo.attach(gl.COLOR_ATTACHMENT0, tex)
 
-	switch (status) {
-		case gl.FRAMEBUFFER_COMPLETE:
-			break
-		case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-			console.log('FRAMEBUFFER_INCOMPLETE_ATTACHMENT')
-			break
-		case gl.FRAMEBUFFER_UNSUPPORTED:
-			console.log('FRAMEBUFFER_UNSUPPORTED')
-			break
-		case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-			console.log('FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT')
-			break
-		case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-			console.log('FRAMEBUFFER_INCOMPLETE_DIMENSIONS')
-		default:
-			console.log('unspecified')
-			console.log(status)
-			break
-	}
+	if (!fbo.checkStatus())
+		throw new Error('Failed to create volume fbo.')
 
-	if (status !== gl.FRAMEBUFFER_COMPLETE) {
-		throw new Error('incomplete frame buffer')
-	}
+	fbo.unbind()
 
+	return fbo
 }
 
-function configureFBO(gl: WebGLRenderingContext, w: number, h: number): FBO {
-
-	const opts = wgl.texture.TextureOpts.Default2D(gl)
-
-	opts.width = w
-	opts.height = h
-	opts.dataType = gl.UNSIGNED_BYTE
-	opts.generateMips = false
-	opts.wrapS = gl.CLAMP_TO_EDGE
-	opts.wrapT = gl.CLAMP_TO_EDGE
-	opts.magFilter = gl.LINEAR
-
-	const tex = wgl.texture.Tex2D(gl, null, opts)
-
-	const fbo = gl.createFramebuffer()
-	const attach = gl.COLOR_ATTACHMENT0
-
-	gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
-	gl.framebufferTexture2D(gl.FRAMEBUFFER, attach, gl.TEXTURE_2D, tex.handle, 0)
-
-	checkFBO(gl)
-
-	gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-
-	return {fbo, texture: tex}
-}
-
-function configureShadowFBO(gl: WebGLRenderingContext, sz: number): FBO {
-	const depthOpts = wgl.texture.TextureOpts.Default2D(gl)
+function configureShadowFBO(gl: WebGLRenderingContext, sz: number): wgl.fbo.FBO {
+	const depthOpts = wgl.texture.Factory.makeShadows(gl, sz)
 	const colorOpts = wgl.texture.TextureOpts.Default2D(gl)
 
 	var ext = gl.getExtension('WEBGL_depth_texture')
 
-	if (!ext) throw new Error('Depth textures are no supported.')
-
-	depthOpts.width = sz
-	depthOpts.height = sz
-	depthOpts.internalFormat = gl.DEPTH_COMPONENT
-	depthOpts.sourceFormat = gl.DEPTH_COMPONENT
-	depthOpts.dataType = gl.UNSIGNED_SHORT
-	depthOpts.generateMips = false
-	depthOpts.wrapS = gl.CLAMP_TO_EDGE
-	depthOpts.wrapT = gl.CLAMP_TO_EDGE
-	depthOpts.magFilter = gl.NEAREST
-	depthOpts.minFilter = gl.NEAREST
+	if (!ext) throw new Error('Depth textures are not supported.')
 
 	colorOpts.width = sz
 	colorOpts.height = sz
 
-	const depthTex = wgl.texture.Tex2D(gl, null, depthOpts)
-	const colorTex = wgl.texture.Tex2D(gl, null, colorOpts)
+	const depthTex = new wgl.texture.Texture(gl, null, depthOpts)
+	const colorTex = new wgl.texture.Texture(gl, null, colorOpts)
 
-	const fbo = gl.createFramebuffer()
+	const fbo = new wgl.fbo.FBO(gl)
 
-	gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
-	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depthTex.handle, 0)
-	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, colorTex.handle, 0)
+	fbo.bind()
+	fbo.attach(gl.DEPTH_ATTACHMENT, depthTex)
+	fbo.attach(gl.COLOR_ATTACHMENT0, colorTex)
 
-	checkFBO(gl)
+	if (!fbo.checkStatus())
+		throw new Error('Failed to create fbo.')
 
-	gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+	fbo.unbind()
 
-	return {fbo, texture: depthTex}
+	return fbo
 }
 
 export async function main() {
@@ -124,6 +72,7 @@ export async function main() {
 	const touchMoveControls = new wgl.Controls.Movement.Touch(touchInput, camera, 10.0)
 
 	let rotationControls: any
+	
 	if (wgl.capabilities.hasPointerLock()) {
 		rotationControls = new wgl.Controls.Orbit.Orbit2(mouseInput, camera)
 	} else {
@@ -132,6 +81,7 @@ export async function main() {
 
 	const genShadowProg = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.GenShadows1)
 	const prog = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.UseShadows1)
+	const prog2 = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.PBR1)
 	const basicProg = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.Basic)
 	const postProg = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.Volume)
 
@@ -146,7 +96,7 @@ export async function main() {
 
 	const fboW = canvas.width*canvas.dpr/4
 	const fboH = canvas.height*canvas.dpr/4
-	const fbo = configureFBO(gl, fboW, fboH)
+	const volumeFbo = configureVolumeFBO(gl, fboW, fboH)
 
 	const shadowSz = 1024
 	const shadowFbo = configureShadowFBO(gl, shadowSz)
@@ -234,7 +184,7 @@ export async function main() {
 
 		const models = scene.models
 
-		gl.bindFramebuffer(gl.FRAMEBUFFER, shadowFbo.fbo)
+		renderer.conditionalBindFBO(shadowFbo)
 
 		gl.clear(gl.DEPTH_BUFFER_BIT)
 
@@ -249,8 +199,6 @@ export async function main() {
 			genShadowProg.setUniform('model', model.getWorldMatrix())
 			model.mesh.draw()
 		}
-
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 
 		gl.viewport(0, 0, canvas.width*canvas.dpr, canvas.height*canvas.dpr)
 
@@ -271,24 +219,29 @@ export async function main() {
 
 	function regularPass() {
 
+		renderer.conditionalBindFBO(null)
+
 		const transforms = getLightSpaceProjView()
 		const trans = mat4.multiply(mat4.create(), transforms.proj, transforms.view)
 
 		renderer.conditionalBindProgram(prog)
 
-		shadowFbo.texture.bind()
+		let shadowTex = shadowFbo.getTexture(gl.DEPTH_ATTACHMENT)
 
-		prog.setUniform('shadow_depth_map', shadowFbo.texture)
+		shadowTex.bind()
+
+		prog.setUniform('shadow_depth_map', shadowTex)
 		prog.setUniform('shadow_size', shadowSz)
 		prog.setUniform('light_space_transform', trans)
 
 		renderer.render(scene, camera)
 
-		shadowFbo.texture.unbind()
+		shadowTex.unbind()
 	}
 
 	function blackPass() {
-		gl.bindFramebuffer(gl.FRAMEBUFFER, fbo.fbo)
+		renderer.conditionalBindFBO(volumeFbo)
+
 		gl.viewport(0, 0, fboW, fboH)
 
 		sphereModel.program = basicProg
@@ -308,8 +261,6 @@ export async function main() {
 		sphereModel.material.getAttribute('albedo').setValue(sphereColor)
 		lightSphereModel.material.getAttribute('albedo').setValue(lightColor)
 
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-
 		gl.viewport(0, 0, canvas.width * canvas.dpr, canvas.height * canvas.dpr)
 	}
 
@@ -317,10 +268,12 @@ export async function main() {
 		gl.enable(gl.BLEND)
 		gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
 
+		renderer.conditionalBindFBO(null)
 		renderer.conditionalBindProgram(postProg)
 		renderer.conditionalBindMesh(postProg, quad)
 
-		fbo.texture.index = 0
+		let occlusionTex = volumeFbo.getTexture(gl.COLOR_ATTACHMENT0)
+		occlusionTex.index = 0
 
 		let pos = getScreenSpacePosition(lightPosition, camera.getViewMatrix(), renderer.getProjectionMatrix())
 
@@ -330,15 +283,15 @@ export async function main() {
 		postProg.setUniform('uDecay', 1.0)
 		postProg.setUniform('uExposure', 1.0)
 		postProg.seti('uNumSamples', 25)
-		postProg.setUniform('uOcclusionTexture', fbo.texture)
+		postProg.setUniform('uOcclusionTexture', occlusionTex)
 
-		fbo.texture.bind()
+		occlusionTex.bind()
 
 		quad.bind(postProg)
 		quad.draw()
 		quad.unbind()
 
-		fbo.texture.unbind()
+		occlusionTex.unbind()
 
 		gl.disable(gl.BLEND)
 	}

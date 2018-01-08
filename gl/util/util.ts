@@ -6,10 +6,12 @@ import * as common from './common-util'
 import * as time from './time-util'
 import * as assert from './assert-util'
 import * as defaults from './default-util'
+import * as image from './image-util'
 
 export {
 	assert,
 	defaults,
+	image,
 	vector,
 	matrix,
 	types,

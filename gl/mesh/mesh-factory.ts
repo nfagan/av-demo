@@ -213,6 +213,21 @@ class MeshFactory {
 
 	}
 
+    // public static makeNonIndexedPlane(mesh: Mesh, vertexCount: number) {
+
+    //     if (!math.isPow2(vertexCount))
+    //         throw new Error(`Vertex count must be a power of 2; was ${vertexCount}.`)
+
+    //     for (let i = 0; i < vertexCount; i++) {
+    //         for (let j = 0; j < vertexCount; j++) {
+    //             let x, y, z, u, v: number
+    //             x = i / (vertexCount-1)
+    //             y = j / (vertexCount-1)
+    //             z = 0
+    //         }
+    //     }
+    // }
+
 }
 
 export { MeshFactory, MeshTypes }

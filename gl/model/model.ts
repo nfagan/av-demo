@@ -10,7 +10,7 @@ export type RenderCallbackT = () => void
 
 class Model extends Resource {
 
-	private gl: WebGLRenderingContext
+	public gl: WebGLRenderingContext
 	public mesh: Mesh
 	public program: ShaderProgram
 	public material: Material.Material
@@ -26,6 +26,10 @@ class Model extends Resource {
 	private transform: matrix.transform
 
 	public order: number
+
+	//	Properties
+	public receivesLight: boolean
+	public receivesShadow: boolean
 
 	//	Events
 	public onBeforeRender: RenderCallbackT
@@ -46,6 +50,10 @@ class Model extends Resource {
 
 		this.parent = null
 		this.children = {}
+
+		//	properties
+		this.receivesLight = true
+		this.receivesShadow = true
 
 		this.onBeforeRender = () => {}
 		this.onAfterRender = () => {}

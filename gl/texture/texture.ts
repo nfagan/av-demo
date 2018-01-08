@@ -2,7 +2,7 @@ import * as defaults from '../util/default-util'
 import * as math from '../math/wgl-math'
 import { Resource } from '../common/resource'
 
-export type DataTypes = HTMLImageElement | Uint8Array | null
+export type TextureDataTypes = HTMLImageElement | Uint8Array | null
 
 export class TextureOpts {
 	level: number
@@ -32,12 +32,12 @@ export class TextureOpts {
 		opts.wrapT = gl.CLAMP_TO_EDGE
 		opts.minFilter = gl.LINEAR
 		opts.magFilter = gl.LINEAR
-		opts.generateMips = true
+		opts.generateMips = false
 		return opts
 	}
 }
 
-export function Tex2D(gl: WebGLRenderingContext, data: DataTypes, opts?: TextureOpts): Texture {
+export function Tex2D(gl: WebGLRenderingContext, data: TextureDataTypes, opts?: TextureOpts): Texture {
 	if (!opts) {
 		opts = TextureOpts.Default2D(gl)
 		if (data && data instanceof HTMLImageElement) {
@@ -55,11 +55,11 @@ export class Texture extends Resource {
 	public handle: WebGLTexture
 	private _exists: boolean
 	private _bound: boolean
-	public data: DataTypes
+	public data: TextureDataTypes
 
 	public index: number
 
-	constructor(gl: WebGLRenderingContext, data: DataTypes, opts: TextureOpts) {
+	constructor(gl: WebGLRenderingContext, data: TextureDataTypes, opts: TextureOpts) {
 		super()
 		this.gl = gl
 		this.opts = opts

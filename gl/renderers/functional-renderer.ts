@@ -8,14 +8,20 @@ import { Camera } from '../camera/camera'
 import { mat4 } from 'gl-matrix'
 import * as Material from '../material/material'
 import * as texture from '../texture/texture'
+import { FBO } from '../fbo/fbo'
 import { types } from '../util/util'
 import { Scene } from '../scene/scene'
+import { Builder } from '../shader-builder/shader-builder-index'
 
 export default class extends base {
 
-	lastMesh: Mesh = null
-	lastProgram: Shader.ShaderProgram = null
-	lastMaterial: Material.Material = null
+	private lastMesh: Mesh = null
+	private lastProgram: Shader.ShaderProgram = null
+	private lastMaterial: Material.Material = null
+	private lastFBO: FBO = null
+
+	private lightIds: {[key: string]: {[key: string]: Array<string>}} = {}
+	private textureIds: {[key: string]: Array<string>} = {}
 
 	constructor(gl: WebGLRenderingContext) {
 		super(gl)
@@ -32,6 +38,12 @@ export default class extends base {
 
 		if (scene.models.length === 0) return
 		if (!scene.modelsSorted) scene.sortModels(Model.compareMeshUUID)
+
+		const self = this
+
+		scene.models.map(model => self.requireProgram(model))
+
+		this.clearLightIds()
 
 		this.configureCamera(scene.models[0].program, camera)
 		this.configureLights(scene.models[0].program, scene.lights)
@@ -109,7 +121,8 @@ export default class extends base {
 	public configureLight(prog: Shader.ShaderProgram, light: Light.Light, force: boolean = false): void {
 		let isNewProg = this.conditionalBindProgram(prog)
 		if (!light.active) return
-		let index = light.getIndex()
+		// let index = light.getIndex()
+		let index = this.getLightIndex(prog, light)
 		let attrs: Array<Light.Attribute> = light.enumerateAttributes()
 		for (let attr of attrs) {
 			if (isNewProg || force || attr.isDirty) {
@@ -137,6 +150,38 @@ export default class extends base {
 		return isNewMaterial
 	}
 
+	private clearLightIds(): void {
+		this.lightIds = {}
+	}
+
+	private getLightIndex(prog: Shader.ShaderProgram, light: Light.Light): number {
+		let ids = this.lightIds[prog.uuid]
+		let lightName = light.getName()
+		if (ids === undefined) {
+			this.lightIds[prog.uuid] = {}
+			this.lightIds[prog.uuid][lightName] = [light.uuid]
+			return 0
+		} else {
+			let idsThisLightKind = this.lightIds[prog.uuid][lightName]
+			if (idsThisLightKind === undefined) {
+				this.lightIds[prog.uuid][lightName] = [light.uuid]
+				return 0
+			}
+			for (let i = 0; i < idsThisLightKind.length; i++) {
+				if (idsThisLightKind[i] === light.uuid)
+					return i
+			}
+			idsThisLightKind.push(light.uuid)
+			return idsThisLightKind.length - 1
+		}
+	}
+
+	public requireProgram(model: Model) {
+		if (model.program === null) {
+			model.program = Builder.fromModel(model)
+		}		
+	}
+
 	public conditionalBindMesh(prog: Shader.ShaderProgram, mesh: Mesh, force: boolean = false): boolean {
 		let isNullLastMesh = this.lastMesh === null
 		let isNewBoundProg = !mesh.isBoundTo(prog)
@@ -158,6 +203,17 @@ export default class extends base {
 		}
 		this.lastProgram = prog
 		return isNewProgram
+	}
+
+	public conditionalBindFBO(fbo: FBO, force: boolean = false): boolean {
+		let isNullLastFBO = this.lastFBO === null
+		let isNewFBO = force || isNullLastFBO || !FBO.equals(fbo, this.lastFBO)
+		if (isNewFBO) {
+			if (!isNullLastFBO && this.lastFBO.isBound()) this.lastFBO.unbind()
+			if (fbo !== null && !fbo.isBound()) fbo.bind()
+		}
+		this.lastFBO = fbo
+		return isNewFBO
 	}
 
 	private conditionalSetUniform(prog: Shader.ShaderProgram, name: uniforms.UniformNames, value: Shader.UniformSettable): void {

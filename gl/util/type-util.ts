@@ -1,5 +1,6 @@
 import { mat4, vec2, vec3, glMatrix } from 'gl-matrix'
 import * as texture from '../texture/texture'
+import { LightNames } from '../light/light'
 
 export type arrayPrimitive = Array<number>
 export type arrayLike = Array<number> | Float32Array
@@ -9,6 +10,8 @@ export type primitive = number | boolean | string
 export type vec3Convertible = number | vec3 | Array<number>
 export type cloneable = primitive | mat4 | vec3 | arrayPrimitive | texture.Texture
 export type vector = vec2 | vec3
+export type glsl = LightNames | 'int' | 'float' | 'vec2' | 'vec3' | 'vec4' | 'mat3' | 'mat4' | 'sampler2D'
+export type glslPrecision = 'mediump' | 'highp'
 
 export enum core {
 	mat4,
@@ -25,6 +28,10 @@ export function isMat4(data: vec3 | mat4): data is mat4 {
 
 export function isVec3(data: vec3 | mat4): data is vec3 {
 	return data.length === 3
+}
+
+export function isNumber(data: cloneable): data is number {
+	return typeof data === 'number'
 }
 
 export function isPrimitive(data: cloneable): data is primitive {

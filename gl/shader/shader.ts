@@ -2,6 +2,7 @@ import { mat4, vec3 } from 'gl-matrix'
 import { Resource } from '../common/resource'
 import { vector, types } from '../util/util'
 import { UniformNames, UniformMap } from './uniforms'
+import { ShaderAttributeKinds, ShaderAttributes } from './attributes'
 import * as texture from '../texture/texture'
 
 type LocationMappable = {
@@ -25,37 +26,7 @@ type ShaderProgramSource = {
 	sources: Array<ShaderSource>
 }
 
-type ShaderAttribute = {
-	name: string,
-	location: number
-}
-
-type ShaderAttributeKinds = 'position' | 'uv' | 'normal'
 type ShaderCoreUniformKinds = 'model' | 'view' | 'projection' | 'camera_position'
-
-class ShaderAttributes {
-
-	[key: string]: ShaderAttribute
-
-	position: ShaderAttribute
-	uv: ShaderAttribute
-	normal: ShaderAttribute
-
-	constructor() {
-		this.position = {
-			name: 'in_position',
-			location: null
-		}
-		this.uv = {
-			name: 'in_uv',
-			location: null
-		}
-		this.normal = {
-			name: 'in_normal',
-			location: null
-		}
-	}
-}
 
 class Shader extends Resource {
 
@@ -121,7 +92,7 @@ class ShaderProgram extends Resource {
 	private program?: WebGLProgram
 	private attributes: ShaderAttributes
 	private _isBound: boolean = false
-	private uniformLocations: LocationMappable = {}
+	private uniformLocations: { [key: string]: WebGLUniformLocation }
 
 	public isValid: boolean = true
 	public isFinalized: boolean = false
@@ -130,6 +101,7 @@ class ShaderProgram extends Resource {
 		super()
 		this.attributes = new ShaderAttributes()
 		this.gl = gl
+		this.uniformLocations = {}
 	}
 
 	public attach(shaders: Array<Shader>) {

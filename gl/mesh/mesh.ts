@@ -99,28 +99,32 @@ class Mesh extends Resource {
 
 		//	position
 		let posLoc: number = program.getAttributeLocation('position')
+		const sizePos = vert0.sizePosition()
 		gl.enableVertexAttribArray(posLoc)
-		gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, stride*bytes, offset*bytes)
-		offset += 3
+		gl.vertexAttribPointer(posLoc, sizePos, gl.FLOAT, false, stride*bytes, offset*bytes)
+		offset += sizePos
 
 		//	uv
 		if (vert0.sizeUV() > 0) {
 			let uvLoc: number = program.getAttributeLocation('uv')
+			const sizeUV = vert0.sizeUV()
 			if (uvLoc !== -1) {
 				gl.enableVertexAttribArray(uvLoc)
-				gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, stride*bytes, offset*bytes)
-				offset += 2
+				gl.vertexAttribPointer(uvLoc, sizeUV, gl.FLOAT, false, stride*bytes, offset*bytes)
 			}
+			offset += sizeUV
 		}
 
 		//	normals
 		if (vert0.sizeNormal() > 0) {
 			let normLoc: number = program.getAttributeLocation('normal')
+			const sizeNorm = vert0.sizeNormal()
 			if (normLoc !== -1) {
 				gl.enableVertexAttribArray(normLoc)
-				gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, stride*bytes, offset*bytes)
-				offset += 3
+				gl.vertexAttribPointer(normLoc, sizeNorm, gl.FLOAT, false, stride*bytes, offset*bytes)
+				// offset += 3
 			}
+			offset += sizeNorm
 		}
 
 		//	indices
