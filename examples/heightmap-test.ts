@@ -4,6 +4,19 @@ import { mat4, quat, vec3, glMatrix } from 'gl-matrix'
 
 export async function main() {
 
+	const audioManager = new waud.AudioContextManager()
+	const nLevels = 32
+	const analyser = new waud.AudioAnalyser(audioManager.getContext(), {levelsCount: nLevels})
+	const files = ['sep30.aac']
+
+	analyser.setup()
+
+	await Promise.all(audioManager.loadSounds(files))
+
+	const destination = analyser.getAnalyserNode()
+
+	const togglePlay = () => audioManager.togglePlay(files[0], destination)
+
 	document.body.style.padding = '0'
 	document.body.style.margin = '0'
 	document.body.style.position = 'fixed'
@@ -16,6 +29,10 @@ export async function main() {
 
 	if (!gl) 
 		throw new Error('Unable to initialize GL context.')
+
+	canvasElement.onclick = () => togglePlay()
+
+	keyboard.down(() => togglePlay(), wgl.Input.Keys.space)
 
 	const scene = new wgl.Scene(gl)
 	const renderer = new wgl.renderers.functional(gl)
@@ -41,6 +58,10 @@ export async function main() {
 	const light2 = wgl.Light.Light.Directional(gl)
 	const sky = new wgl.Model(gl, null, sphere, mat.clone())
 	const sphere2 = new wgl.Model(gl, null, sphere, mat.clone())
+	const sphere3 = new wgl.Model(gl, null, sphere, mat.clone())
+
+	sphere3.setPosition([0, 20, 0])
+	sphere3.setScale(10)
 
 	sphereModel.receivesLight = false
 	sky.receivesLight = false
@@ -65,7 +86,7 @@ export async function main() {
 	renderer.setNearFar(0.1, farPlane)
 	
 	// scene.add([sphereModel, light, light2, sphere2, sky])
-	scene.add([light2, sphere2, sky])
+	scene.add([light2, sphere2, sky, sphere3])
 
 	const lightColor = [1, 1, 1]
 	const lightDirection = [-5, -10, -5]
@@ -112,6 +133,14 @@ export async function main() {
 		keyboardMoveControls.update()
 		rotationControls.update()
 		touchMoveControls.update()
+
+		analyser.update()
+
+		let levels = analyser.getLevels()
+
+		let newColor = [Math.pow(levels[0], 2), 0, 0]
+		light2.setColor(newColor)
+		sphere2.material.getAttribute('albedo').setValue(newColor)
 
 		renderer.render(scene, camera)
 		window.requestAnimationFrame(animate)

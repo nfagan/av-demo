@@ -49,7 +49,9 @@ class Material extends attribute.Attributable<Attribute, MaterialAttributeMap, A
 	}
 
 	clone(): Material {
-		return this._clone(Material, Attribute, this.gl)
+		let mat = this._clone(Material, Attribute, this.gl)
+		mat.lightingModel = this.getLightingModel()
+		return mat
 	}
 
 	public static Basic(gl: WebGLRenderingContext,
