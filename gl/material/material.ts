@@ -35,17 +35,13 @@ class Material extends attribute.Attributable<Attribute, MaterialAttributeMap, A
 		this.gl = gl
 	}
 
-	private isTexture(name: AttributeNames): boolean {
-		return this.getAttribute(name).isTexture()
-	}
-
 	public getLightingModel(): LightingModels {
 		return this.lightingModel
 	}
 
 	public hasTexture(): boolean {
 		for (let attr of this.enumerateAttributes()) {
-			if (this.isTexture(attr.name))
+			if (attr.isTexture())
 				return true
 		}
 		return false
