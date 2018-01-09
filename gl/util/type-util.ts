@@ -22,6 +22,22 @@ export enum core {
 	string
 }
 
+export function getGLSLType(data: number | vec3 | texture.Texture): glsl {
+	if (isTexture(data))
+		return 'sampler2D'
+	if (isNElementArray(data, 2))
+		return 'vec2'
+	if (isNElementArray(data, 3))
+		return 'vec3'
+	if (isNElementArray(data, 4))
+		return 'vec4'
+	if (isNumber(data))
+		return 'float'
+	
+	console.log(data)
+	throw new Error('Cannot resolve the glsl data type for the given js data.')
+}
+
 export function isMat4(data: vec3 | mat4): data is mat4 {
 	return data.length === 16
 }

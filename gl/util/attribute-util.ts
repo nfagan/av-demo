@@ -79,6 +79,12 @@ export namespace validators {
 			throw new Error(`Attribute "${attr.name}" must be a vec3 (or equivalent array-type), or a texture.`)
 		}
 	}
+	export function NumberOrTexture<ST extends types.cloneable, 
+		GT extends types.cloneable, K extends string>(attr: _Attribute<ST, GT, K>, data: ST) {
+		if (!types.isNumber(data) && !types.isTexture(data)) {
+			throw new Error(`Attribute "${attr.name}" must be a number, or a texture.`)
+		}
+	}
 	export function Boolean<ST extends types.cloneable, 
 		GT extends types.cloneable, K extends string>(attr: _Attribute<ST, GT, K>, data: ST) {
 		if (typeof(data) !== 'boolean')

@@ -18,6 +18,9 @@ class Attribute extends attribute._Attribute<SetT, GetT, AttributeNames> {
 	public isTexture(): boolean {
 		return types.isTexture(this.value)
 	}
+	public getGLSLType(): types.glsl {
+		return types.getGLSLType(this.value)
+	}
 }
 
 class MaterialAttributeMap extends attribute._AttributeMap<Attribute> { constructor() { super() } }
@@ -32,7 +35,7 @@ class Material extends attribute.Attributable<Attribute, MaterialAttributeMap, A
 		this.gl = gl
 	}
 
-	public isTexture(name: AttributeNames): boolean {
+	private isTexture(name: AttributeNames): boolean {
 		return this.getAttribute(name).isTexture()
 	}
 
@@ -71,8 +74,8 @@ class Material extends attribute.Attributable<Attribute, MaterialAttributeMap, A
 		let mat = new Material(gl)
 		mat.lightingModel = 'physical'
 		mat.addAttribute(new Attribute('albedo', _albedo, attribute.validators.Vec3OrTexture))
-		mat.addAttribute(new Attribute('roughness', _roughness, attribute.validators.Number))
-		mat.addAttribute(new Attribute('metallic', _metallic, attribute.validators.Number))
+		mat.addAttribute(new Attribute('roughness', _roughness, attribute.validators.NumberOrTexture))
+		mat.addAttribute(new Attribute('metallic', _metallic, attribute.validators.NumberOrTexture))
 		return mat
 	}
 }

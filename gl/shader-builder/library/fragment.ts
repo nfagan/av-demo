@@ -16,9 +16,13 @@ export namespace body {
 }
 
 export namespace main {
-	export function physical1(albedoIsTexture: boolean): Array<primitives.makeFuncT> {
+	export function physical1(albedo: primitives.uniformT, 
+			roughness: primitives.uniformT,
+			metallic: primitives.uniformT): Array<primitives.makeFuncT> {
 		return [
-			() => components.main.makeAlbedo(albedoIsTexture),
+			() => components.main.makeAlbedo(albedo),
+			() => components.main.makeRoughness(roughness),
+			() => components.main.makeMetallic(metallic),
 			components.main.makeLo,
 			components.main.makeAmbient,
 			components.main.startDirectionalLightLoop,
@@ -34,9 +38,9 @@ export namespace main {
 		]
 	}
 
-	export function noLighting(albedoIsTexture: boolean): Array<primitives.makeFuncT> {
+	export function noLighting(albedo: primitives.uniformT): Array<primitives.makeFuncT> {
 		return [
-			() => components.main.makeAlbedo(albedoIsTexture),
+			() => components.main.makeAlbedo(albedo),
 			components.main.assignAlbedo
 		]
 	}

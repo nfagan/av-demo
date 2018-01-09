@@ -56,32 +56,47 @@ export class Builder {
 		// 	}
 		// }
 
-		Builder.assertAttributePresent(model.material, 'albedo', 'shader construction')
+		let lightingModel = model.material.getLightingModel()
 
-		const albedoIsTexture = model.material.getAttribute('albedo').isTexture()
+		if (lightingModel !== 'physical')
+			throw new Error(`Lighting model ${lightingModel} is not yet supported.`)
 
-		fragUniforms.push({name: 'albedo', kind: albedoIsTexture ? 'sampler2D' : 'vec3'})
+		const albedoAtt = model.material.getAttribute('albedo')
+
+		let albedoUniform: primitives.uniformT = {
+			name: 'albedo', kind: albedoAtt.getGLSLType() 
+		}
+
+		fragUniforms.push(albedoUniform)
 
 		let lightBody: Array<primitives.makeFuncT> = []
 		let lightMain: Array<primitives.makeFuncT> = []
 
 		if (model.receivesLight) {
-			let lightingModel = model.material.getLightingModel()
+			const roughnessAtt = model.material.getAttribute('roughness')
+			const metallicAtt = model.material.getAttribute('metallic')
 
-			if (lightingModel !== 'physical')
-				throw new Error(`Lighting model ${lightingModel} is not yet supported.`)
+			let roughness: primitives.uniformT = {
+				name: 'roughness',
+				kind: roughnessAtt.getGLSLType()
+			}
+
+			let metallic: primitives.uniformT = {
+				name: 'metallic',
+				kind: metallicAtt.getGLSLType()
+			}
 
 			fragUniforms.push({name: 'camera_position', kind: 'vec3'})
 			fragUniforms.push({name: 'directional', kind: 'directional', isArray: true, length: nDirLights})
 			fragUniforms.push({name: 'point', kind: 'point', isArray: true, length: nPointLights})
-			fragUniforms.push({name: 'roughness', kind: 'float'})
-			fragUniforms.push({name: 'metallic', kind: 'float'})
+			fragUniforms.push(roughness)
+			fragUniforms.push(metallic)
 
 			lightBody = fragment.library.body.physical1(nPointLights, nDirLights)
 			
-			lightMain = fragment.library.main.physical1(albedoIsTexture)
+			lightMain = fragment.library.main.physical1(albedoUniform, roughness, metallic)
 		} else {
-			lightMain = fragment.library.main.noLighting(albedoIsTexture)
+			lightMain = fragment.library.main.noLighting(albedoUniform)
 		}
 
 		lightBody.map(body => fragBody.push(body))
@@ -115,8 +130,6 @@ export class Builder {
 		if (cachedShader !== undefined) {
 			console.log('Using cached shader ...')
 			return cachedShader
-		} else {
-			console.log(Builder.shaders)
 		}
 
 		const vertShaderSource: shader.ShaderSource = {

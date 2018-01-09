@@ -13,8 +13,16 @@ function getFinalColorName(): string { return 'final_color' }
 
 export namespace main {
 
-	export function makeAlbedo(isTexture: boolean): string {
-		return primitives.makeTextureOrVec3UniformToVec3('albedo', isTexture)
+	export function makeAlbedo(albedo: primitives.uniformT): string {
+		return primitives.makeTextureOrTUniformToT(albedo, 'vec3')
+	}
+
+	export function makeRoughness(roughness: primitives.uniformT): string {
+		return primitives.makeTextureOrTUniformToT(roughness, 'float')
+	}
+
+	export function makeMetallic(metallic: primitives.uniformT): string {
+		return primitives.makeTextureOrTUniformToT(metallic, 'float')
 	}
 
 	export function assignWhite(): string {
@@ -41,8 +49,8 @@ export namespace main {
 		const norm = primitives.getVaryingName('normal')
 		const pos = primitives.getVaryingName('position')
 		const albedo = primitives.makeMainNameFromUniform('albedo')
-		const roughness = primitives.getUniformName('roughness')
-		const metallic = primitives.getUniformName('metallic')
+		const roughness = primitives.makeMainNameFromUniform('roughness')
+		const metallic = primitives.makeMainNameFromUniform('metallic')
 		const camPos = primitives.getUniformName('camera_position')
 		const ptLight = primitives.getUniformName('point')
 		const lightPos = primitives.getUniformName('position')
@@ -81,8 +89,8 @@ export namespace main {
 		const norm = primitives.getVaryingName('normal')
 		const pos = primitives.getVaryingName('position')
 		const albedo = primitives.makeMainNameFromUniform('albedo')
-		const roughness = primitives.getUniformName('roughness')
-		const metallic = primitives.getUniformName('metallic')
+		const roughness = primitives.makeMainNameFromUniform('roughness')
+		const metallic = primitives.makeMainNameFromUniform('metallic')
 		const camPos = primitives.getUniformName('camera_position')
 		const dirLight = primitives.getUniformName('directional')
 		const lightDir = primitives.getUniformName('direction')

@@ -34,9 +34,8 @@ class AudioContextManager {
 		const context = this.context
 		const sounds = this.sounds
 		let loader = new Promise((resolve, reject) => {
-			let request = new XMLHttpRequest(),
-				fullfile: string = '/sounds/' + filename
-			request.open('GET', fullfile);
+			let request = new XMLHttpRequest()
+			request.open('GET', filename)
 			request.responseType = 'arraybuffer';
 			request.onload = () => {
 				context.decodeAudioData(request.response, (buffer) => {

@@ -9,7 +9,7 @@ export async function main() {
 	const audioManager = new waud.AudioContextManager()
 	const nLevels = 32
 	const analyser = new waud.AudioAnalyser(audioManager.getContext(), {levelsCount: nLevels})
-	const files = ['sep30.aac']
+	const files = ['sounds/sep30.aac']
 
 	analyser.setup()
 

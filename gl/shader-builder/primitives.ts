@@ -9,13 +9,15 @@ export type uniformT = {
 	name: uniforms.UniformNames,
 	kind: types.glsl,
 	isArray?: boolean,
-	length?: number
+	length?: number,
+	components?: string
 }
 export type userUniformT = {
 	name: string,
 	kind: types.glsl,
 	isArray?: boolean,
-	length?: number
+	length?: number,
+	components?: string
 }
 
 export type uniformArrayT = Array<uniformT>
@@ -119,15 +121,40 @@ export function makeMainNameFromUniform(name: uniforms.UniformNames): string {
 }
 
 export function makeTextureOrVec3UniformToVec3(name: uniforms.UniformNames, isTexture: boolean): string {
+	return _makeTextureOrTUniformToT(name, 'vec3', isTexture, 'rgb')
+}
+
+export function makeTextureOrFloatUniformToFloat(name: uniforms.UniformNames, isTexture: boolean, component: string = 'r'): string {
+	return _makeTextureOrTUniformToT(name, 'float', isTexture, component)
+}
+
+function _makeTextureOrTUniformToT(name: uniforms.UniformNames, assignedType: types.glsl, isTexture: boolean, components: string): string {
 	let uniformName = getUniformName(name)
 	let assignedName = makeMainNameFromUniform(name)
-	let assignedType: types.glsl = 'vec3'
 	let uvName = getVaryingName('uv')
 	if (isTexture) {
-		return `${assignedType} ${assignedName} = texture2D(${uniformName}, ${uvName}).rgb;`
+		return `${assignedType} ${assignedName} = texture2D(${uniformName}, ${uvName}).${components};`
 	} else {
 		return `${assignedType} ${assignedName} = ${uniformName};`
 	}
+}
+
+function requireTextureComponents(un: uniformT, assignedT: types.glsl): string {
+	if (un.components)
+		return un.components
+	if (assignedT === 'float')
+		return 'r'
+	if (assignedT === 'vec2')
+		return 'rg'
+	if (assignedT === 'vec3')
+		return 'rgb'
+	throw new Error(`Unsupported texture-to-type conversion for type "${assignedT}".`)
+}
+
+export function makeTextureOrTUniformToT(un: uniformT, assignedT: types.glsl): string {
+	let isTexture = un.kind === 'sampler2D'
+	let components = requireTextureComponents(un, assignedT)
+	return _makeTextureOrTUniformToT(un.name, assignedT, isTexture, components)
 }
 
 export function makeHeader(mapFunc: ShaderAttributeDataTypeFuncT, 

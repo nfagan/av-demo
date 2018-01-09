@@ -7,7 +7,7 @@ export async function main() {
 	const audioManager = new waud.AudioContextManager()
 	const nLevels = 32
 	const analyser = new waud.AudioAnalyser(audioManager.getContext(), {levelsCount: nLevels})
-	const files = ['sep30.aac']
+	const files = ['/sounds/sep30.aac']
 
 	analyser.setup()
 
@@ -51,6 +51,9 @@ export async function main() {
 		rotationControls = new wgl.Controls.Orbit.Orbit(touchInput, camera)
 	}
 
+	const skyTex = await wgl.Loaders.TEX.load2D(gl, '/tex/skys:sky3.png')
+	const nebTex = await wgl.Loaders.TEX.load2D(gl, '/tex/neb.png')
+
 	const sphere = wgl.MeshFactory.create(gl, 'sphere')
 	const mat = wgl.Material.Material.Physical(gl)
 	const sphereModel = new wgl.Model(gl, null, sphere, mat)
@@ -62,6 +65,12 @@ export async function main() {
 
 	sphere3.setPosition([0, 20, 0])
 	sphere3.setScale(10)
+
+	sphere3.material.getAttribute('roughness').setValue(skyTex)
+	sphere3.material.getAttribute('albedo').setValue(skyTex)
+	sphere3.material.getAttribute('metallic').setValue(nebTex)
+
+	sphere3.receivesLight = true
 
 	sphereModel.receivesLight = false
 	sky.receivesLight = false
@@ -77,7 +86,6 @@ export async function main() {
 
 	const farPlane = 1000
 
-	const skyTex = await wgl.Loaders.TEX.load2D(gl, '/tex/skys:sky3.png')
 	sky.material.getAttribute('albedo').setValue(skyTex)
 	sky.setPosition([0, 0, 0])
 	sky.setScale(farPlane - 10)
@@ -115,9 +123,15 @@ export async function main() {
 		camera.setPosition([0, 0, 0])
 		renderer.configureCamera(sky.program, camera)
 	}
-	sphere2.onAfterRender = () => camera.setPosition(origPosition)
+	sphere2.onAfterRender = () => {
+		camera.setPosition(origPosition)
+		renderer.configureCamera(sky.program, camera)
+	}
 
-	sky.onAfterRender = () => camera.setPosition(origPosition)
+	sky.onAfterRender = () => {
+		camera.setPosition(origPosition)
+		renderer.configureCamera(sky.program, camera)
+	}
 
 	//
 	//	heightmap stuff
@@ -138,9 +152,9 @@ export async function main() {
 
 		let levels = analyser.getLevels()
 
-		let newColor = [Math.pow(levels[0], 2), 0, 0]
-		light2.setColor(newColor)
-		sphere2.material.getAttribute('albedo').setValue(newColor)
+		// let newColor = [Math.pow(levels[0], 2), 0, 0]
+		// light2.setColor(newColor)
+		// sphere2.material.getAttribute('albedo').setValue(newColor)
 
 		renderer.render(scene, camera)
 		window.requestAnimationFrame(animate)

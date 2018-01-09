@@ -44,6 +44,7 @@ export default class extends base {
 		scene.models.map(model => self.requireProgram(model))
 
 		this.clearLightIds()
+		this.clearTextureIds()
 
 		this.configureCamera(scene.models[0].program, camera)
 		this.configureLights(scene.models[0].program, scene.lights)
@@ -115,13 +116,16 @@ export default class extends base {
 
 	public configureTexture(prog: Shader.ShaderProgram, tex: texture.Texture): void {
 		this.conditionalBindProgram(prog)
+		const index = this.getTextureIndex(prog, tex)
+		const gl = this.gl
+		tex.index = index
+		gl.activeTexture(gl.TEXTURE0 + index)
 		tex.bind()
 	}
 
 	public configureLight(prog: Shader.ShaderProgram, light: Light.Light, force: boolean = false): void {
 		let isNewProg = this.conditionalBindProgram(prog)
 		if (!light.active) return
-		// let index = light.getIndex()
 		let index = this.getLightIndex(prog, light)
 		let attrs: Array<Light.Attribute> = light.enumerateAttributes()
 		for (let attr of attrs) {
@@ -154,6 +158,10 @@ export default class extends base {
 		this.lightIds = {}
 	}
 
+	private clearTextureIds(): void {
+		this.textureIds = {}
+	}
+
 	private getLightIndex(prog: Shader.ShaderProgram, light: Light.Light): number {
 		let ids = this.lightIds[prog.uuid]
 		let lightName = light.getName()
@@ -161,19 +169,32 @@ export default class extends base {
 			this.lightIds[prog.uuid] = {}
 			this.lightIds[prog.uuid][lightName] = [light.uuid]
 			return 0
-		} else {
-			let idsThisLightKind = this.lightIds[prog.uuid][lightName]
-			if (idsThisLightKind === undefined) {
-				this.lightIds[prog.uuid][lightName] = [light.uuid]
-				return 0
-			}
-			for (let i = 0; i < idsThisLightKind.length; i++) {
-				if (idsThisLightKind[i] === light.uuid)
-					return i
-			}
-			idsThisLightKind.push(light.uuid)
-			return idsThisLightKind.length - 1
 		}
+		let idsThisLightKind = this.lightIds[prog.uuid][lightName]
+		if (idsThisLightKind === undefined) {
+			this.lightIds[prog.uuid][lightName] = [light.uuid]
+			return 0
+		}
+		for (let i = 0; i < idsThisLightKind.length; i++) {
+			if (idsThisLightKind[i] === light.uuid)
+				return i
+		}
+		idsThisLightKind.push(light.uuid)
+		return idsThisLightKind.length - 1
+	}
+
+	private getTextureIndex(prog: Shader.ShaderProgram, tex: texture.Texture): number {
+		let ids = this.textureIds[prog.uuid]
+		if (ids === undefined) {
+			this.textureIds[prog.uuid] = [tex.uuid]
+			return 0
+		}
+		for (let i = 0; i < ids.length; i++) {
+			if (ids[i] === tex.uuid)
+				return i
+		}
+		ids.push(tex.uuid)
+		return ids.length - 1
 	}
 
 	public requireProgram(model: Model) {
