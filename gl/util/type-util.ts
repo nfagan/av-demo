@@ -50,6 +50,10 @@ export function isNumber(data: cloneable): data is number {
 	return typeof data === 'number'
 }
 
+export function isBoolean(data: cloneable): data is boolean {
+	return typeof data === 'boolean'
+}
+
 export function isPrimitive(data: cloneable): data is primitive {
 	if (typeof data === 'number' || typeof data === 'boolean' || typeof data === 'string')
 		return true

@@ -40,7 +40,7 @@ export async function main() {
 	mat.getAttribute('albedo').setValue(tex)
 
 	sphereModel.receivesLight = true
-	sphereModel.program = wgl.ShaderBuilder.Builder.fromModel(sphereModel)
+	sphereModel.program = wgl.ShaderBuilder.fromModel(sphereModel)
 	// sphereModel.program = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.PBRTex)
 
 	renderer.setAspect(canvas.aspect)

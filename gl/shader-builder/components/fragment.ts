@@ -14,15 +14,15 @@ function getFinalColorName(): string { return 'final_color' }
 export namespace main {
 
 	export function makeAlbedo(albedo: primitives.uniformT): string {
-		return primitives.makeTextureOrTUniformToT(albedo, 'vec3')
+		return primitives.makeTextureOrTBuiltinUniformToT(albedo, 'vec3')
 	}
 
 	export function makeRoughness(roughness: primitives.uniformT): string {
-		return primitives.makeTextureOrTUniformToT(roughness, 'float')
+		return primitives.makeTextureOrTBuiltinUniformToT(roughness, 'float')
 	}
 
 	export function makeMetallic(metallic: primitives.uniformT): string {
-		return primitives.makeTextureOrTUniformToT(metallic, 'float')
+		return primitives.makeTextureOrTBuiltinUniformToT(metallic, 'float')
 	}
 
 	export function assignWhite(): string {
@@ -30,12 +30,12 @@ export namespace main {
 	}
 
 	export function assignAlbedo(): string {
-		let albedoName = primitives.makeMainNameFromUniform('albedo')
+		let albedoName = primitives.makeMainNameFromBuiltinUniform('albedo')
 		return `gl_FragColor = vec4(${albedoName}, 1.0);`
 	}
 
 	export function makeAmbient(amt: number = 0.03): string {
-		let albedoName = primitives.makeMainNameFromUniform('albedo')
+		let albedoName = primitives.makeMainNameFromBuiltinUniform('albedo')
 		let ambientName = getAmbientName()
 		let amtStr = amt.toFixed(2).toString()
 		return `vec3 ${ambientName} = vec3(${amtStr}) * ${albedoName};`
@@ -48,14 +48,14 @@ export namespace main {
 	export function makePointLight(): string {
 		const norm = primitives.getVaryingName('normal')
 		const pos = primitives.getVaryingName('position')
-		const albedo = primitives.makeMainNameFromUniform('albedo')
-		const roughness = primitives.makeMainNameFromUniform('roughness')
-		const metallic = primitives.makeMainNameFromUniform('metallic')
-		const camPos = primitives.getUniformName('camera_position')
-		const ptLight = primitives.getUniformName('point')
-		const lightPos = primitives.getUniformName('position')
-		const lightCol = primitives.getUniformName('color')
-		const lightMask = primitives.getUniformName('mask')
+		const albedo = primitives.makeMainNameFromBuiltinUniform('albedo')
+		const roughness = primitives.makeMainNameFromBuiltinUniform('roughness')
+		const metallic = primitives.makeMainNameFromBuiltinUniform('metallic')
+		const camPos = primitives.getBuiltinUniformName('camera_position')
+		const ptLight = primitives.getBuiltinUniformName('point')
+		const lightPos = primitives.getBuiltinUniformName('position')
+		const lightCol = primitives.getBuiltinUniformName('color')
+		const lightMask = primitives.getBuiltinUniformName('mask')
 		const loName = getLoName()
 		const resName = getIntermediateLightingCalcName()
 		const res = `
@@ -88,14 +88,14 @@ export namespace main {
 	export function makeDirectionalLight(): string {
 		const norm = primitives.getVaryingName('normal')
 		const pos = primitives.getVaryingName('position')
-		const albedo = primitives.makeMainNameFromUniform('albedo')
-		const roughness = primitives.makeMainNameFromUniform('roughness')
-		const metallic = primitives.makeMainNameFromUniform('metallic')
-		const camPos = primitives.getUniformName('camera_position')
-		const dirLight = primitives.getUniformName('directional')
-		const lightDir = primitives.getUniformName('direction')
-		const lightCol = primitives.getUniformName('color')
-		const lightMask = primitives.getUniformName('mask')
+		const albedo = primitives.makeMainNameFromBuiltinUniform('albedo')
+		const roughness = primitives.makeMainNameFromBuiltinUniform('roughness')
+		const metallic = primitives.makeMainNameFromBuiltinUniform('metallic')
+		const camPos = primitives.getBuiltinUniformName('camera_position')
+		const dirLight = primitives.getBuiltinUniformName('directional')
+		const lightDir = primitives.getBuiltinUniformName('direction')
+		const lightCol = primitives.getBuiltinUniformName('color')
+		const lightMask = primitives.getBuiltinUniformName('mask')
 		const loName = getLoName()
 		const resName = getIntermediateLightingCalcName()
 		const res = `

@@ -10,7 +10,7 @@ type GetT = number | vec3 | texture.Texture
 
 class Attribute extends attribute._Attribute<SetT, GetT, AttributeNames> {
 	_setValue(value: SetT): GetT {
-		if (typeof(value) != 'number' && !(value instanceof texture.Texture)) {
+		if (!types.isNumber(value) && !types.isTexture(value)) {
 			value = vector.requireVec3(value)
 		}
 		return value

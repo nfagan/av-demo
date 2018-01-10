@@ -11,9 +11,9 @@ export function getNDirectionalLightsName(): string {
 
 export function makePointLightStruct(): string {
 	let lightTypeName = primitives.getLightTypeName('point')
-	let lightPos = primitives.getUniformName('position')
-	let lightCol = primitives.getUniformName('color')
-	let lightMask = primitives.getUniformName('mask')
+	let lightPos = primitives.getBuiltinUniformName('position')
+	let lightCol = primitives.getBuiltinUniformName('color')
+	let lightMask = primitives.getBuiltinUniformName('mask')
 
 	return `struct ${lightTypeName} {
 		vec3 ${lightPos};
@@ -24,9 +24,9 @@ export function makePointLightStruct(): string {
 
 export function makeDirectionalLightStruct(): string {
 	let lightTypeName = primitives.getLightTypeName('directional')
-	let lightDir = primitives.getUniformName('direction')
-	let lightCol = primitives.getUniformName('color')
-	let lightMask = primitives.getUniformName('mask')
+	let lightDir = primitives.getBuiltinUniformName('direction')
+	let lightCol = primitives.getBuiltinUniformName('color')
+	let lightMask = primitives.getBuiltinUniformName('mask')
 
 	return `struct ${lightTypeName} {
 		vec3 ${lightDir};
@@ -37,14 +37,14 @@ export function makeDirectionalLightStruct(): string {
 
 export function makePointLightArray(): string {
 	const lightTypeName = primitives.getLightTypeName('point')
-	const lightUniformName = primitives.getUniformName('point')
+	const lightUniformName = primitives.getBuiltinUniformName('point')
 	const nLightsName = getNPointLightsName()
 	return `uniform ${lightTypeName} ${lightUniformName}[${nLightsName}];`
 }
 
 export function makeDirectionalLightArray(): string {
 	const lightTypeName = primitives.getLightTypeName('directional')
-	const lightUniformName = primitives.getUniformName('directional')
+	const lightUniformName = primitives.getBuiltinUniformName('directional')
 	const nLightsName = getNDirectionalLightsName()
 	return `uniform ${lightTypeName} ${lightUniformName}[${nLightsName}];`
 }

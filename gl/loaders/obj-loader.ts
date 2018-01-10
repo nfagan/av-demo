@@ -2,8 +2,6 @@ import { Mesh } from '../mesh/mesh'
 import { Vertex, Topologies } from '../mesh/vertex'
 import * as assert from '../util/assert-util'
 
-// https://github.com/YuqinShao/WebGL-Obj-Loader/blob/master/webgl-obj-loader.js
-
 type ObjT = {
     indices: Array<number>,
     vertices: Array<number>,

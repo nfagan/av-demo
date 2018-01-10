@@ -3,9 +3,9 @@ import { ShaderAttributeDataType3D } from '../../shader/attributes'
 
 export namespace main {
 	export const assignPosition: primitives.makeFuncT = () => {
-		const model = primitives.getUniformName('model')
-		const view = primitives.getUniformName('view')
-		const proj = primitives.getUniformName('projection')
+		const model = primitives.getBuiltinUniformName('model')
+		const view = primitives.getBuiltinUniformName('view')
+		const proj = primitives.getBuiltinUniformName('projection')
 		const pos = primitives.getAttributeName('position')
 
 		return `gl_Position = ${proj} * ${view} * ${model} * vec4(${pos}, 1.0);`
@@ -22,7 +22,7 @@ export namespace main {
 	export const passWorldPosition: primitives.makeFuncT = () => {
 		let vPos = primitives.getVaryingName('position')
 		let aPos = primitives.getAttributeName('position')
-		let model = primitives.getUniformName('model')
+		let model = primitives.getBuiltinUniformName('model')
 		return `${vPos} = vec3(${model} * vec4(${aPos}, 1.0));`
 	}
 

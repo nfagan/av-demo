@@ -11,7 +11,7 @@ import * as texture from '../texture/texture'
 import { FBO } from '../fbo/fbo'
 import { types } from '../util/util'
 import { Scene } from '../scene/scene'
-import { Builder } from '../shader-builder/shader-builder-index'
+import { fromModel } from '../shader-builder/shader-builder-index'
 
 export default class extends base {
 
@@ -131,9 +131,9 @@ export default class extends base {
 		for (let attr of attrs) {
 			if (isNewProg || force || attr.isDirty) {
 				let un = uniforms.Map.getUniform(attr.name)
-				let mappedName = uniforms.Map.getUniform(light.getName())
+				let mappedName = uniforms.requireUniformName(light.getName())
 				let unf = `${mappedName}[${index}].${un}`
-				if (prog.hasUniform(light.getName())) {
+				if (prog.hasUniform(unf)) {
 					prog.setUniform(unf, attr.getValue())
 				}
 			}
@@ -199,7 +199,7 @@ export default class extends base {
 
 	public requireProgram(model: Model) {
 		if (model.program === null) {
-			model.program = Builder.fromModel(model)
+			model.program = fromModel(model)
 		}		
 	}
 
@@ -238,8 +238,9 @@ export default class extends base {
 	}
 
 	private conditionalSetUniform(prog: Shader.ShaderProgram, name: uniforms.UniformNames, value: Shader.UniformSettable): void {
-		if (prog.hasUniform(name)) {
-			prog.setUniform(uniforms.Map.getUniform(name), value)
+		let name_ = uniforms.requireUniformString(name)
+		if (prog.hasUniform(name_)) {
+			prog.setUniform(name_, value)
 		}
 	}
 

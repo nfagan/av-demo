@@ -1,13 +1,9 @@
 import { mat4, vec3 } from 'gl-matrix'
 import { Resource } from '../common/resource'
 import { vector, types } from '../util/util'
-import { UniformNames, UniformMap } from './uniforms'
+import { UniformNames, UniformNameOrString, ShaderCoreUniformKinds, requireUniformString } from './uniforms'
 import { ShaderAttributeKinds, ShaderAttributes } from './attributes'
 import * as texture from '../texture/texture'
-
-type LocationMappable = {
-	[key: string]: WebGLUniformLocation
-}
 
 export type UniformSettable = number | boolean | mat4 | vec3 | Array<number> | texture.Texture
 
@@ -26,15 +22,12 @@ type ShaderProgramSource = {
 	sources: Array<ShaderSource>
 }
 
-type ShaderCoreUniformKinds = 'model' | 'view' | 'projection' | 'camera_position'
-
 class Shader extends Resource {
 
 	private gl: WebGLRenderingContext
 	private source: string
 	private type: number
 	private shader?: WebGLShader
-	private uniforms: UniformMap<boolean>
 
 	public isValid: boolean
 
@@ -44,16 +37,11 @@ class Shader extends Resource {
 		this.source = src.source
 		this.type = Shader.getShaderType(gl, src.type)
 		this.isValid = true
-		this.uniforms = new UniformMap(src.uniforms, true)
 		this.setup()
 	}
 
 	public getGLShader(): WebGLShader {
 		return this.shader
-	}
-
-	public hasUniform(name: UniformNames): boolean {
-		return this.uniforms.hasUniform(name)
 	}
 
 	private setup(): void {
@@ -73,9 +61,9 @@ class Shader extends Resource {
 	}
 
 	private static getShaderType(gl: WebGLRenderingContext, type: ShaderTypes): number {
-		if (type == ShaderTypes.FRAGMENT)
+		if (type === ShaderTypes.FRAGMENT)
 			return gl.FRAGMENT_SHADER
-		if (type == ShaderTypes.VERTEX)
+		if (type === ShaderTypes.VERTEX)
 			return gl.VERTEX_SHADER
 		throw new Error('Unrecognized shader type.')
 	}
@@ -127,12 +115,8 @@ class ShaderProgram extends Resource {
 		this._isBound = false
 	}
 
-	public hasUniform(name: UniformNames) {
-		for (let shader of this.shaders) {
-			if (shader.hasUniform(name))
-				return true
-		}
-		return false
+	public hasUniform(name: string): boolean {
+		return this.getUniformLocation(name, true) !== null
 	}
 
 	public isBound(): boolean {
@@ -140,16 +124,16 @@ class ShaderProgram extends Resource {
 	}
 
 	public setUniform(name: string, value: UniformSettable) {
-		if (typeof(value) == 'number') {
+		if (types.isNumber(value)) {
 			this.setf(name, value)
 
-		} else if (typeof(value) == 'boolean') {
+		} else if (types.isBoolean(value)) {
 			this.setb(name, value)
 
 		} else if (Array.isArray(value)) {
 			this.setVec3f(name, value)
 
-		} else if (value instanceof texture.Texture) {
+		} else if (types.isTexture(value)) {
 			this.seti(name, value.index)
 
 		} else if (types.isMat4(value)) {
@@ -222,16 +206,15 @@ class ShaderProgram extends Resource {
 		return this.program
 	}
 
-	private getUniformLocation(name: string): WebGLUniformLocation {
+	private getUniformLocation(name: string, silent: boolean = false): WebGLUniformLocation {
 		this.assertFinalized('uniform')
 		let loc: WebGLUniformLocation = this.uniformLocations[name]
 		if (loc === undefined) {
 			loc = this.gl.getUniformLocation(this.program, name)
-			if (loc == null) {
-				console.warn(`Unrecognized uniform name "${name}".`)
-			} else {
-				this.uniformLocations[name] = loc
-			}
+			this.uniformLocations[name] = loc
+		}
+		if (loc === null && !silent) {
+			console.warn(`"${name}" is not a recognized uniform name.`)
 		}
 		return loc
 	}

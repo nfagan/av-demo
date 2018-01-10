@@ -2,20 +2,13 @@ import { types } from '../util/util'
 import * as _Light from '../light/light'
 import * as _Material from '../material/material'
 import * as _Shader from './shader'
+import { Stream } from 'stream';
 
-export type UniformNames = _Material.AttributeNames | _Light.LightUniformNames | _Shader.ShaderCoreUniformKinds
+export type ShaderCoreUniformKinds = 'model' | 'view' | 'projection' | 'camera_position'
 
-export class UniformMap<T> {
-	public items: { [key: string]: T }
-	constructor(names: UniformNames[], value: T) {
-		this.items = {}
-		const items = this.items
-		names.map(name => items[name] = value)
-	}
-	public hasUniform(name: UniformNames) {
-		return this.items[name] !== undefined
-	}
-}
+export type UniformNames = _Material.AttributeNames | _Light.LightUniformNames | ShaderCoreUniformKinds
+
+export type UniformNameOrString = UniformNames | string
 
 export class Map {
 	static items: { [K in UniformNames]: string } = {
@@ -42,4 +35,19 @@ export class Map {
 	static getUniform(name: UniformNames): string {
 		return Map.items[name]
 	}
+
+	static isUniform(name: string): name is UniformNames {
+		return Map.getUniform(name as UniformNames) !== undefined
+	}
+}
+
+export function requireUniformString(value: UniformNameOrString): string {
+	let item = Map.items[value as UniformNames]
+	if (item !== undefined)
+		return item
+	return value
+}
+
+export function requireUniformName(name: UniformNames): string {
+	return Map.getUniform(name)
 }

@@ -38,18 +38,18 @@ export class FBO extends Resource {
 			case gl.FRAMEBUFFER_COMPLETE:
 				break
 			case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-				console.log('FRAMEBUFFER_INCOMPLETE_ATTACHMENT')
+				console.warn('FRAMEBUFFER_INCOMPLETE_ATTACHMENT')
 				break
 			case gl.FRAMEBUFFER_UNSUPPORTED:
-				console.log('FRAMEBUFFER_UNSUPPORTED')
+				console.warn('FRAMEBUFFER_UNSUPPORTED')
 				break
 			case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-				console.log('FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT')
+				console.warn('FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT')
 				break
 			case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-				console.log('FRAMEBUFFER_INCOMPLETE_DIMENSIONS')
+				console.warn('FRAMEBUFFER_INCOMPLETE_DIMENSIONS')
 			default:
-				console.log(`(unspecified): ${status}`)
+				console.warn(`(unspecified): ${status}`)
 				break
 		}
 

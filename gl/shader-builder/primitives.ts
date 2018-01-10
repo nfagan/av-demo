@@ -12,6 +12,7 @@ export type uniformT = {
 	length?: number,
 	components?: string
 }
+
 export type userUniformT = {
 	name: string,
 	kind: types.glsl,
@@ -20,16 +21,13 @@ export type userUniformT = {
 	components?: string
 }
 
-export type uniformArrayT = Array<uniformT>
-export type userUniformArrayT = Array<userUniformT>
-
 export type makeFuncT = () => string
 
 export type VertexSource = {
 	attributes: ShaderAttributeKinds[],
 	varyings: ShaderAttributeKinds[],
-	uniforms: uniformArrayT,
-	userUniforms: userUniformArrayT,
+	uniforms: uniformT[],
+	userUniforms: userUniformT[],
 
 	attributeMapFunc: ShaderAttributeDataTypeFuncT
 
@@ -39,8 +37,8 @@ export type VertexSource = {
 
 export type FragmentSource = {
 	varyings: ShaderAttributeKinds[],
-	uniforms: uniformArrayT,
-	userUniforms: userUniformArrayT,
+	uniforms: uniformT[],
+	userUniforms: userUniformT[],
 	precision: types.glslPrecision,
 
 	body: Array<makeFuncT> | makeFuncT,
@@ -62,8 +60,12 @@ export function getVaryingName(name: ShaderAttributeKinds): string {
 	return ShaderVaryingMap.getVarying(name)
 }
 
-export function getUniformName(name: uniforms.UniformNames): string {
-	return uniforms.Map.getUniform(name)
+export function getUniformName(name: uniforms.UniformNameOrString): string {
+	return uniforms.requireUniformString(name)
+}
+
+export function getBuiltinUniformName(name: uniforms.UniformNames): string {
+	return getUniformName(name)
 }
 
 export function getGLSLTypeName(name: types.glsl): string {
@@ -78,7 +80,7 @@ export function getLightTypeName(name: LightNames): string {
 	return LightTypesMap.getLightType(name)
 }
 
-export function getUniformNamesFromUniformArrayT(arr: uniformArrayT): uniforms.UniformNames[] {
+export function getUniformNamesFromUniformArrayT(arr: uniformT[]): uniforms.UniformNames[] {
 	return arr.map(val => val.name)
 }
 
@@ -94,41 +96,36 @@ export function makeVarying(name: ShaderAttributeKinds, kind: types.glsl): strin
 	return `varying ${kindStr} ${varying};`
 }
 
-export function makeUniform(name: uniforms.UniformNames, kind: types.glsl): string {
-	let uniform = getUniformName(name)
-	let kindStr = GLSLTypeMap.getType(kind)
-	return `uniform ${kindStr} ${uniform};`
-}
-
-export function makeUniformArray(name: uniforms.UniformNames, kind: types.glsl, N: number): string {
+export function makeUniformArray(name: uniforms.UniformNameOrString, kind: types.glsl, N: number): string {
 	let uniform = getUniformName(name)
 	let kindStr = GLSLTypeMap.getType(kind)
 	return `uniform ${kindStr} ${uniform}[${N}];`
 }
 
-export function makeUserUniform(name: string, kind: types.glsl): string {
+export function makeUniform(name: uniforms.UniformNameOrString, kind: types.glsl): string {
+	let uniform = getUniformName(name)
 	let kindStr = GLSLTypeMap.getType(kind)
-	return `uniform ${kindStr} ${name};`
+	return `uniform ${kindStr} ${uniform};`
 }
 
-export function makeUserUniformArray(name: string, kind: types.glsl, N: number): string {
-	let kindStr = GLSLTypeMap.getType(kind)
-	return `uniform ${kindStr} ${name}[${N}];`
+export function makeBuiltinUniform(name: uniforms.UniformNames, kind: types.glsl): string {
+	return makeUniform(name, kind)
 }
 
-export function makeMainNameFromUniform(name: uniforms.UniformNames): string {
-	return `${name}_`
+export function makeBuiltinUniformArray(name: uniforms.UniformNames, kind: types.glsl, N: number): string {
+	return makeUniformArray(name, kind, N)
 }
 
-export function makeTextureOrVec3UniformToVec3(name: uniforms.UniformNames, isTexture: boolean): string {
-	return _makeTextureOrTUniformToT(name, 'vec3', isTexture, 'rgb')
+export function makeMainNameFromBuiltinUniform(name: uniforms.UniformNames): string {
+	return makeMainNameFromUniform(name)
 }
 
-export function makeTextureOrFloatUniformToFloat(name: uniforms.UniformNames, isTexture: boolean, component: string = 'r'): string {
-	return _makeTextureOrTUniformToT(name, 'float', isTexture, component)
+export function makeMainNameFromUniform(name: uniforms.UniformNameOrString): string {
+	let name_ = getUniformName(name)
+	return `${name_}_`
 }
 
-function _makeTextureOrTUniformToT(name: uniforms.UniformNames, assignedType: types.glsl, isTexture: boolean, components: string): string {
+function _makeTextureOrTUniformToT(name: uniforms.UniformNameOrString, assignedType: types.glsl, isTexture: boolean, components: string): string {
 	let uniformName = getUniformName(name)
 	let assignedName = makeMainNameFromUniform(name)
 	let uvName = getVaryingName('uv')
@@ -139,7 +136,7 @@ function _makeTextureOrTUniformToT(name: uniforms.UniformNames, assignedType: ty
 	}
 }
 
-function requireTextureComponents(un: uniformT, assignedT: types.glsl): string {
+function requireTextureComponents(un: uniformT | userUniformT, assignedT: types.glsl): string {
 	if (un.components)
 		return un.components
 	if (assignedT === 'float')
@@ -151,7 +148,13 @@ function requireTextureComponents(un: uniformT, assignedT: types.glsl): string {
 	throw new Error(`Unsupported texture-to-type conversion for type "${assignedT}".`)
 }
 
-export function makeTextureOrTUniformToT(un: uniformT, assignedT: types.glsl): string {
+export function makeTextureOrTBuiltinUniformToT(un: uniformT, assignedT: types.glsl): string {
+	let isTexture = un.kind === 'sampler2D'
+	let components = requireTextureComponents(un, assignedT)
+	return _makeTextureOrTUniformToT(un.name, assignedT, isTexture, components)
+}
+
+export function makeTextureOrTUniformToT(un: userUniformT, assignedT: types.glsl): string {
 	let isTexture = un.kind === 'sampler2D'
 	let components = requireTextureComponents(un, assignedT)
 	return _makeTextureOrTUniformToT(un.name, assignedT, isTexture, components)
@@ -160,8 +163,8 @@ export function makeTextureOrTUniformToT(un: uniformT, assignedT: types.glsl): s
 export function makeHeader(mapFunc: ShaderAttributeDataTypeFuncT, 
 		attributes: ShaderAttributeKinds[], 
 		varying: ShaderAttributeKinds[], 
-		uns: uniformArrayT,
-		userUniforms: userUniformArrayT): string {
+		uns: uniformT[],
+		userUniforms: userUniformT[]): string {
 
 	let lines: Array<string> = []
 
@@ -171,16 +174,16 @@ export function makeHeader(mapFunc: ShaderAttributeDataTypeFuncT,
 
 	uns.map(un => {
 		if (un.isArray)
-			lines.push(makeUniformArray(un.name, un.kind, un.length))
+			lines.push(makeBuiltinUniformArray(un.name, un.kind, un.length))
 		else
-			lines.push(makeUniform(un.name, un.kind))
+			lines.push(makeBuiltinUniform(un.name, un.kind))
 	})
 
 	userUniforms.map(un => {
 		if (un.isArray)
-			lines.push(makeUserUniformArray(un.name, un.kind, un.length))
+			lines.push(makeUniformArray(un.name, un.kind, un.length))
 		else
-			lines.push(makeUserUniform(un.name, un.kind))
+			lines.push(makeUniform(un.name, un.kind))
 	})
 
 	return lines.join('\n')

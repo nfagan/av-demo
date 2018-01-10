@@ -157,6 +157,7 @@ export async function main() {
 		// sphere2.material.getAttribute('albedo').setValue(newColor)
 
 		renderer.render(scene, camera)
+
 		window.requestAnimationFrame(animate)
 	}
 
