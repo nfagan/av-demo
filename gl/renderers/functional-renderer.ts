@@ -31,6 +31,8 @@ export default class extends base {
 		this.lastMesh = null
 		this.lastProgram = null
 		this.lastMaterial = null
+		this.clearLightIds()
+		this.clearTextureIds()
 	}
 
 	public render(scene: Scene, camera: Camera) {

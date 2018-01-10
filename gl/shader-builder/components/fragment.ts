@@ -25,6 +25,10 @@ export namespace main {
 		return primitives.makeTextureOrTBuiltinUniformToT(metallic, 'float')
 	}
 
+	export function makeUniform(un: primitives.userUniformT | primitives.uniformT, to: types.glsl): string {
+		return primitives.makeTextureOrTUniformToT(un, to)
+	}
+
 	export function assignWhite(): string {
 		return 'gl_FragColor = vec4(1.0);'
 	}
