@@ -1,6 +1,4 @@
 import * as wgl from '../gl/web-gl'
-import * as waud from '../aud/web-audio'
-import { mat4, quat, vec3, glMatrix } from 'gl-matrix'
 
 export async function main() {
 
@@ -24,16 +22,16 @@ export async function main() {
 	const mouseInput = new wgl.Input.PointerLock(canvas.element)
 	const rotationControls = new wgl.Controls.Orbit.Orbit2(mouseInput, camera)
 
-	const prog = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.PBR1)
 	const sphere = wgl.MeshFactory.create(gl, 'sphere')
 	const mat = wgl.Material.Material.Physical(gl)
-	const sphereModel = new wgl.Model(gl, prog, sphere, mat)
+	const sphereModel = new wgl.Model(gl, null, sphere, mat)
 	const light = wgl.Light.Light.Point(gl)
+	const lightModel = new wgl.Model(gl, null, sphere, mat.clone())
 
 	renderer.setAspect(canvas.aspect)
 	renderer.setNearFar(0.1, 1000)
 	
-	scene.add([sphereModel, light])
+	scene.add([sphereModel, light, lightModel])
 
 	const lightPosition = [5, 5, 5]
 	const sphereColor = [0.25, 1, 0.25]
@@ -42,6 +40,9 @@ export async function main() {
 	light.getAttribute('position').setValue(lightPosition)
 	sphereModel.setPosition(spherePosition)
 	sphereModel.material.getAttribute('albedo').setValue(sphereColor)
+
+	lightModel.setPosition(lightPosition)
+	lightModel.receivesLight = false
 
 	camera.setPosition([0, 0, 5])
 

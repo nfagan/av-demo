@@ -11,10 +11,10 @@ import * as builderTest from './shader-builder-test'
 // eg1.main()
 // eg2.main()
 
-// barebones.main()
+barebones.main()
 
 // volume.main()
 
-height.main()
+// height.main()
 
 // builderTest.main()
