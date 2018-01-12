@@ -53,6 +53,8 @@ export async function main() {
 
 	const skyTex = await wgl.Loaders.TEX.load2D(gl, '/tex/skys:sky3.png')
 	const nebTex = await wgl.Loaders.TEX.load2D(gl, '/tex/neb.png')
+	const treeMesh = await wgl.Loaders.OBJ.loadMesh(gl, '/obj/tree1:tree1.obj')
+	const treeTex = await wgl.Loaders.TEX.load2D(gl, '/tex/tree1.png')
 
 	const sphere = wgl.MeshFactory.create(gl, 'sphere')
 	const mat = wgl.Material.Material.Physical(gl)
@@ -62,6 +64,14 @@ export async function main() {
 	const sky = new wgl.Model(gl, null, sphere, mat.clone())
 	const sphere2 = new wgl.Model(gl, null, sphere, mat.clone())
 	const sphere3 = new wgl.Model(gl, null, sphere, mat.clone())
+	const treeModel = new wgl.Model(gl, null, treeMesh, mat.clone())
+
+	treeModel.setPosition([0, 10, 10])
+	treeModel.setScale(1.0)
+	treeModel.material.getAttribute('albedo').setValue(treeTex)
+	treeModel.receivesLight = true
+
+	// scene.add(treeModel)
 
 	sphere3.setPosition([0, 20, 0])
 	sphere3.setScale(10)
@@ -93,7 +103,6 @@ export async function main() {
 	renderer.setAspect(canvas.aspect)
 	renderer.setNearFar(0.1, farPlane)
 	
-	// scene.add([sphereModel, light, light2, sphere2, sky])
 	scene.add([light2, sphere2, sky, sphere3])
 
 	const lightColor = [1, 1, 1]
@@ -133,14 +142,28 @@ export async function main() {
 		renderer.configureCamera(sky.program, camera)
 	}
 
+	const terrain = await getTerrain(gl, null)
+
+	scene.add(terrain.model)
+
+	const treeModels: Array<wgl.Model> = []
+	for (let i = 0; i < 0; i++) {
+		let treeMod = new wgl.Model(gl, null, treeMesh, mat.clone())
+		let x = -100 + Math.random() * 200
+		let z = -100 + Math.random() * 200
+		let fracX = (x + 100) / 200
+		let fracZ = (z + 100) / 200
+		let pos = vec3.fromValues(x, terrain.heightMap.valueAtNearestXZ(fracX, fracZ), z)
+		treeMod.setPosition(pos)
+		treeMod.receivesLight = true
+		treeMod.material.getAttribute('albedo').setValue(treeTex)
+		scene.add(treeMod)
+		treeModels.push(treeMod)
+	}
+
 	//
 	//	heightmap stuff
 	//
-
-	// const terrain = await getTerrain(gl, prog)
-	const terrain = await getTerrain(gl, null)
-
-	scene.add(terrain)
 
 	const animate = () => {
 
@@ -164,7 +187,9 @@ export async function main() {
 	animate()
 }
 
-async function getTerrain(gl: WebGLRenderingContext, prog: wgl.ShaderProgram): Promise<wgl.Model> {
+type heightmapT = {model: wgl.Model, heightMap: wgl.terrain.HeightMap}
+
+async function getTerrain(gl: WebGLRenderingContext, prog: wgl.ShaderProgram): Promise<heightmapT> {
 	const heightImageElement = await wgl.Loaders.image.load('/tex/h4.jpg')
 	const heightImage = new wgl.util.image.Image(heightImageElement)
 	const heightMap = wgl.terrain.HeightMap.fromImageElement(heightImageElement)
@@ -236,10 +261,12 @@ async function getTerrain(gl: WebGLRenderingContext, prog: wgl.ShaderProgram): P
 	heightMat.getAttribute('albedo').setValue([1, 1, 1])
 
 	let terrain = new wgl.Model(gl, prog, heightMesh, heightMat)
-	// terrain.setScale([100, 100, 100])
 	terrain.setScale([100, 10, 100])
 	terrain.setPosition([0, 0, 0])
 	terrain.receivesLight = true
 
-	return terrain
+	return {
+		model: terrain,
+		heightMap: heightMap
+	}
 }

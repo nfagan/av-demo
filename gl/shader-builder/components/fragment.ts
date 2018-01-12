@@ -13,8 +13,8 @@ function getFinalColorName(): string { return 'final_color' }
 
 export namespace main {
 
-	export function makeAlbedo(albedo: primitives.uniformT): string {
-		return primitives.makeTextureOrTBuiltinUniformToT(albedo, 'vec3')
+	export function makeAlbedo(albedo: primitives.uniformT, resType: types.glsl = 'vec3'): string {
+		return primitives.makeTextureOrTBuiltinUniformToT(albedo, resType)
 	}
 
 	export function makeRoughness(roughness: primitives.uniformT): string {
@@ -38,18 +38,23 @@ export namespace main {
 		return `gl_FragColor = vec4(${albedoName}, 1.0);`
 	}
 
-	export function makeAmbient(amt: number = 0.03): string {
+	export function makeAmbient(amt: number = 0.03, resType: types.glsl = 'vec3'): string {
 		let albedoName = primitives.makeMainNameFromBuiltinUniform('albedo')
 		let ambientName = getAmbientName()
 		let amtStr = amt.toFixed(2).toString()
-		return `vec3 ${ambientName} = vec3(${amtStr}) * ${albedoName};`
+		return `${resType} ${ambientName} = ${resType}(${amtStr}) * ${albedoName};`
 	}
 
-	export function makeLo(): string {
-		return `vec3 ${getLoName()} = vec3(0.0);`
+	export function makeLo(resType: types.glsl = 'vec3'): string {
+		return `${resType} ${getLoName()} = ${resType}(0.0);`
 	}
 
-	export function makePointLight(): string {
+	export function rejectAlphaLessThan(value: number): string {
+		let name = getFinalColorName()
+		return `if (${name}.a) < ${value}) discard;`
+	}
+
+	export function makePointLight(resType: types.glsl = 'vec3'): string {
 		const norm = primitives.getVaryingName('normal')
 		const pos = primitives.getVaryingName('position')
 		const albedo = primitives.makeMainNameFromBuiltinUniform('albedo')
@@ -64,7 +69,7 @@ export namespace main {
 		const resName = getIntermediateLightingCalcName()
 		const res = `
 			bool is_directional = false;
-			vec3 ${resName} = PBR(${norm}, ${albedo}, ${roughness}, ${metallic}, 
+			${resType} ${resName} = PBR(${norm}, ${albedo}, ${roughness}, ${metallic}, 
 				${camPos}, ${pos}, ${ptLight}[i].${lightPos}, 
 				${ptLight}[i].${lightCol}, is_directional);
 				${resName} *= ${ptLight}[i].${lightMask};`
@@ -89,7 +94,7 @@ export namespace main {
 		return `${getLoName()} += ${getIntermediateLightingCalcName()};`
 	}
 
-	export function makeDirectionalLight(): string {
+	export function makeDirectionalLight(resType: types.glsl = 'vec3'): string {
 		const norm = primitives.getVaryingName('normal')
 		const pos = primitives.getVaryingName('position')
 		const albedo = primitives.makeMainNameFromBuiltinUniform('albedo')
@@ -104,21 +109,21 @@ export namespace main {
 		const resName = getIntermediateLightingCalcName()
 		const res = `
 			bool is_directional = true;
-			vec3 ${resName} = PBR(${norm}, ${albedo}, ${roughness}, ${metallic}, 
+			${resType} ${resName} = PBR(${norm}, ${albedo}, ${roughness}, ${metallic}, 
 				${camPos}, ${pos}, ${dirLight}[i].${lightDir}, 
 				${dirLight}[i].${lightCol}, is_directional);
 				${resName} *= ${dirLight}[i].${lightMask};`
 		return res
 	}
 
-	export function makeFinalColor(): string {
+	export function makeFinalColor(resType: types.glsl = 'vec3'): string {
 		const finalColor = getFinalColorName()
 		const ambientName = getAmbientName()
 		const loName = getLoName()
 		return `
-			vec3 ${finalColor} = ${ambientName} + ${loName};
-			${finalColor} = ${finalColor} / (${finalColor} + vec3(1.0));
-			${finalColor} = pow(${finalColor}, vec3(1.0/2.2));`
+			${resType} ${finalColor} = ${ambientName} + ${loName};
+			${finalColor} = ${finalColor} / (${finalColor} + ${resType}(1.0));
+			${finalColor} = pow(${finalColor}, ${resType}(1.0/2.2));`
 	}
 
 	export function assignFinalColor(): string {

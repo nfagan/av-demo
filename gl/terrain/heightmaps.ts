@@ -1,4 +1,5 @@
 import { image, assert } from '../util/util'
+import * as math from '../math/wgl-math'
 
 export class HeightMap {
 
@@ -12,17 +13,19 @@ export class HeightMap {
 		this.depth = depth
 	}
 
-	public valueAtXZ(x: number, y: number): number {
+	public valueAtXZ(x: number, z: number): number {
 		assert.assertInteger(x, 'terrain x coordinate')
-		assert.assertInteger(y, 'terrain y coordinate')
-		let index = (y * (this.width) + x)
+		assert.assertInteger(z, 'terrain y coordinate')
+		let index = (z * (this.width) + x)
 		return this.data[index]
 	}
 
-	public valueAtNearestXZ(x: number, y: number): number {
+	public valueAtNearestXZ(x: number, z: number): number {
+		x = math.clampScalar(x, 0, 1)
+		z = math.clampScalar(z, 0, 1)
 		let ix = Math.floor((this.width-1) * x)
-		let iy = Math.floor((this.depth-1) * y)
-		return this.valueAtXZ(ix, iy)
+		let iz = Math.floor((this.depth-1) * z)
+		return this.valueAtXZ(ix, iz)
 	}
 
 	public static fromImageElement(img: HTMLImageElement): HeightMap {

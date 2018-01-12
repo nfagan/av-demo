@@ -46,7 +46,6 @@ export default class extends base {
 		scene.models.map(model => self.requireProgram(model))
 
 		this.clearLightIds()
-		this.clearTextureIds()
 
 		this.configureCamera(scene.models[0].program, camera)
 		this.configureLights(scene.models[0].program, scene.lights)
@@ -69,6 +68,7 @@ export default class extends base {
 
 	public drawModel(scene: Scene, camera: Camera, model: Model): void {
 		model.onBeforeRender()
+		this.clearTextureIds()
 		const prog = model.program
 		const material = model.material
 		const mesh = model.mesh

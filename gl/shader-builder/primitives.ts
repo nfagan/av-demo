@@ -145,6 +145,8 @@ function requireTextureComponents(un: uniformT | userUniformT, assignedT: types.
 		return 'rg'
 	if (assignedT === 'vec3')
 		return 'rgb'
+	if (assignedT === 'vec4')
+		return 'rgba'
 	throw new Error(`Unsupported texture-to-type conversion for type "${assignedT}".`)
 }
 
@@ -218,16 +220,4 @@ export function makeMain(funcs: Array<makeFuncT> | makeFuncT): string {
 	lines.push('}')
 
 	return lines.join('\n')
-}
-
-export function hashSource(source: VertexSource | FragmentSource): number {
-	let body = common.ensureArray(source.body)
-	let main = common.ensureArray(source.main)
-
-	let bodyStr = body.map(body_ => body_.toString())
-	let mainStr = main.map(main_ => main_.toString())
-
-	let allVals = bodyStr.join('\n') + mainStr.join('\n')
-
-	return common.unsafeHash(allVals)
 }

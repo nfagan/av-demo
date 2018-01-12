@@ -8,6 +8,10 @@ export function clamp<T extends Float32Array>(val: T, min: number, max: number):
 	}
 }
 
+export function clampScalar(val: number, min: number, max: number): number {
+	return val < min ? min : val > max ? max : val
+}
+
 export function signedClamp<T extends Float32Array>(val: T, min: number, max: number): void {
 	for (let i: number = 0; i < val.length; i++) {
 		let _val = val[i]

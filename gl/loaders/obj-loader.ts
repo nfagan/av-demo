@@ -82,6 +82,9 @@ export namespace OBJ {
 
                 let _indices = line.split(' ').map(inds => inds.split('/'))
 
+                if (_indices[_indices.length-1].length === 1)
+                    _indices.pop()
+
                 _indices.map((ind, i) => {
                     let msg = 'Face data were formatted incorrectly'
                     if (i == 0 && ind.length !== 1)
@@ -125,7 +128,10 @@ export namespace OBJ {
         function rawAppender(name: keyof ObjT, values: Array<string>, N: number, alias: string) {
             assert.assertNValues(values, N, alias)
             for (let i = 1; i < N; i++) {
-                raw[name].push(parseAndValidate(values[i], parseFloat, alias))
+                let value = parseAndValidate(values[i], parseFloat, alias)
+                if (name === 'uvs')
+                    value = 1 - value
+                raw[name].push(value)
             }
         }
 

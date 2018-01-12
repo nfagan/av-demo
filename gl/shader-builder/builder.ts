@@ -5,7 +5,7 @@ import * as primitives from './primitives'
 import * as vertex from './vertex'
 import * as fragment from './fragment'
 import * as constants from '../shader/constants'
-import { types } from '../util/util'
+import { types, common } from '../util/util'
 
 const shaders: {[key: string]: shader.ShaderProgram} = {}
 
@@ -121,16 +121,6 @@ export function fromModel(model: Model): shader.ShaderProgram {
 }
 
 export function fromSource(gl: WebGLRenderingContext, vert: primitives.VertexSource, frag: primitives.FragmentSource): shader.ShaderProgram {
-	const vertHash = primitives.hashSource(vert)
-	const fragHash = primitives.hashSource(frag)
-	const hashKey = `${vertHash}, ${fragHash}`
-
-	let cachedShader = shaders[hashKey]
-
-	if (cachedShader !== undefined) {
-		console.log('Using cached shader ...')
-		return cachedShader
-	}
 
 	const vertShaderSource: shader.ShaderSource = {
 		source: vertex.make(vert),
@@ -144,6 +134,15 @@ export function fromSource(gl: WebGLRenderingContext, vert: primitives.VertexSou
 		uniforms: primitives.getUniformNamesFromUniformArrayT(frag.uniforms)
 	}
 
+	const hashKey = common.unsafeHash(vertShaderSource.source + fragShaderSource.source)
+
+	let cachedShader = shaders[hashKey]
+
+	if (cachedShader !== undefined) {
+		console.log('Using cached shader ...')
+		return cachedShader
+	}
+
 	const vertShader = new shader.Shader(gl, vertShaderSource)
 	const fragShader = new shader.Shader(gl, fragShaderSource)
 
@@ -155,8 +154,3 @@ export function fromSource(gl: WebGLRenderingContext, vert: primitives.VertexSou
 
 	return prog
 }
-
-	// private static assertAttributePresent(mat: material.Material, attr: material.AttributeNames, op: string): void {
-	// 	if (!mat.hasAttribute(attr))
-	// 		throw new Error(`Operation of type "${op}" requires that the attribute "${attr}" be present.`)
-	// }

@@ -66,7 +66,6 @@ export async function main() {
 	const light = wgl.Light.Light.Point(gl)
 	const light2 = wgl.Light.Light.Directional(gl)
 
-	const prog: wgl.ShaderProgram = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.PBR1)
 	const skyboxProg = wgl.ShaderFactory.Create(gl, wgl.ShaderLibrary.Skybox)
 
 	light.setColor([1, 0.5, 0.25])
@@ -82,11 +81,11 @@ export async function main() {
 
 	const mat = wgl.Material.Material.Physical(gl)
 
-	const planeModel = new wgl.Model(gl, prog, plane, mat)
-	const sphereModel = new wgl.Model(gl, prog, sphere, mat)
-	const cottageModel = new wgl.Model(gl, prog, firstObj, mat.clone())
-	const sun = new wgl.Model(gl, prog, sphere, mat.clone())
-	const anchor = new wgl.Model(gl, prog, sphere, mat.clone())
+	const planeModel = new wgl.Model(gl, null, plane, mat)
+	const sphereModel = new wgl.Model(gl, null, sphere, mat)
+	const cottageModel = new wgl.Model(gl, null, firstObj, mat.clone())
+	const sun = new wgl.Model(gl, null, sphere, mat.clone())
+	const anchor = new wgl.Model(gl, null, sphere, mat.clone())
 	const skybox = new wgl.Model(gl, skyboxProg, skyboxMesh, mat.clone())
 
 	skybox.material.getAttribute('albedo').setValue(firstTex)
