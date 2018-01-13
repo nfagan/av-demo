@@ -30,6 +30,7 @@ class Model extends Resource {
 	//	Properties
 	public receivesLight: boolean
 	public receivesShadow: boolean
+	public visible: boolean
 
 	//	Events
 	public onBeforeRender: RenderCallbackT
@@ -54,6 +55,7 @@ class Model extends Resource {
 		//	properties
 		this.receivesLight = true
 		this.receivesShadow = true
+		this.visible = true
 
 		this.onBeforeRender = () => {}
 		this.onAfterRender = () => {}

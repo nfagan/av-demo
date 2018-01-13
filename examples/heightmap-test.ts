@@ -37,6 +37,7 @@ export async function main() {
 	const scene = new wgl.Scene(gl)
 	const renderer = new wgl.renderers.functional(gl)
 	const camera = new wgl.Camera()
+	const stats = new wgl.FrameStats()
 
 	const mouseInput = new wgl.Input.PointerLock(canvas.element)
 	const touchInput = new wgl.Input.Touch()
@@ -77,7 +78,7 @@ export async function main() {
 	sphere3.setScale(10)
 
 	sphere3.material.getAttribute('roughness').setValue(skyTex)
-	sphere3.material.getAttribute('albedo').setValue(skyTex)
+	sphere3.material.getAttribute('albedo').setValue([0, 0, 1])
 	sphere3.material.getAttribute('metallic').setValue(nebTex)
 
 	sphere3.receivesLight = true
@@ -167,6 +168,7 @@ export async function main() {
 
 	const animate = () => {
 
+		stats.update()
 		keyboardMoveControls.update()
 		rotationControls.update()
 		touchMoveControls.update()

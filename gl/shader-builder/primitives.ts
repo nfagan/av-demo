@@ -202,10 +202,8 @@ export function makePassedAttributes(mapFunc: ShaderAttributeDataTypeFuncT, attr
 }
 
 export function makeFuncOrArrayFunc(src: Array<string>, funcs: Array<makeFuncT> | makeFuncT): void {
-	if (Array.isArray(funcs))
-		funcs.map(func => src.push(func()))
-	else
-		src.push(funcs())
+	funcs = common.ensureArray(funcs)
+	funcs.map(func => src.push(func()))
 }
 
 export function makeMain(funcs: Array<makeFuncT> | makeFuncT): string {

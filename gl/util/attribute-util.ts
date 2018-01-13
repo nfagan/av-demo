@@ -101,6 +101,10 @@ export class _AttributeMap<T extends _AttributeBase> {
 		this.items[val.name] = val
 	}
 
+	public remove(name: string): void {
+		delete this.items[name]
+	}
+
 	public getAll(): Array<T> {
 		let items = this.items
 		let keys: Array<string> = Object.keys(items)
@@ -128,6 +132,10 @@ export abstract class Attributable<AtT extends _AttributeBase, MapT extends _Att
 
 	protected addAttribute(attr: AtT): void {
 		this.attributes.add(attr)
+	}
+
+	protected removeAttribute(name: K): void {
+		this.attributes.remove(name)
 	}
 
 	protected addAttributes(...attrs: Array<AtT>) {

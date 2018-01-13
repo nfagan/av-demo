@@ -47,9 +47,6 @@ export default class extends base {
 
 		this.clearLightIds()
 
-		this.configureCamera(scene.models[0].program, camera)
-		this.configureLights(scene.models[0].program, scene.lights)
-
 		for (let model of scene.models) {
 			this.drawModel(scene, camera, model)
 		}
@@ -67,20 +64,30 @@ export default class extends base {
 	}
 
 	public drawModel(scene: Scene, camera: Camera, model: Model): void {
+		if (!model.visible)
+			return
+
 		model.onBeforeRender()
+
 		this.clearTextureIds()
+
 		const prog = model.program
 		const material = model.material
 		const mesh = model.mesh
+
 		let forceUpdate = false
+
 		if (this.conditionalBindProgram(prog)) {
 			forceUpdate = true
 			this.configureCamera(prog, camera)
 			this.configureLights(prog, scene.lights, forceUpdate)
 		}
+
 		this.configureTransform(prog, model.getWorldMatrix())
 		this.configureMaterial(prog, material, forceUpdate)
+
 		this.draw(prog, mesh, forceUpdate)
+
 		model.onAfterRender()
 	}
 

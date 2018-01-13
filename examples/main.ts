@@ -13,8 +13,8 @@ import * as builderTest from './shader-builder-test'
 
 // barebones.main()
 
-// volume.main()
+volume.main()
 
-height.main()
+// height.main()
 
 // builderTest.main()
