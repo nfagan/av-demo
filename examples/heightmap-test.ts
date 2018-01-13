@@ -58,14 +58,14 @@ export async function main() {
 	const treeTex = await wgl.Loaders.TEX.load2D(gl, '/tex/tree1.png')
 
 	const sphere = wgl.MeshFactory.create(gl, 'sphere')
-	const mat = wgl.Material.Material.Physical(gl)
-	const sphereModel = new wgl.Model(gl, null, sphere, mat)
-	const light = wgl.Light.Light.Point(gl)
-	const light2 = wgl.Light.Light.Directional(gl)
-	const sky = new wgl.Model(gl, null, sphere, mat.clone())
-	const sphere2 = new wgl.Model(gl, null, sphere, mat.clone())
-	const sphere3 = new wgl.Model(gl, null, sphere, mat.clone())
-	const treeModel = new wgl.Model(gl, null, treeMesh, mat.clone())
+	const mat = wgl.Material.Physical(gl)
+	const sphereModel = new wgl.Model(gl, sphere, mat)
+	const light = wgl.Light.Point(gl)
+	const light2 = wgl.Light.Directional(gl)
+	const sky = new wgl.Model(gl, sphere, mat.clone())
+	const sphere2 = new wgl.Model(gl, sphere, mat.clone())
+	const sphere3 = new wgl.Model(gl, sphere, mat.clone())
+	const treeModel = new wgl.Model(gl, treeMesh, mat.clone())
 
 	treeModel.setPosition([0, 10, 10])
 	treeModel.setScale(1.0)
@@ -77,8 +77,8 @@ export async function main() {
 	sphere3.setPosition([0, 20, 0])
 	sphere3.setScale(10)
 
-	sphere3.material.getAttribute('roughness').setValue(skyTex)
-	sphere3.material.getAttribute('albedo').setValue([0, 0, 1])
+	sphere3.material.getAttribute('roughness').setValue(nebTex)
+	sphere3.material.getAttribute('albedo').setValue(skyTex)
 	sphere3.material.getAttribute('metallic').setValue(nebTex)
 
 	sphere3.receivesLight = true
@@ -149,7 +149,7 @@ export async function main() {
 
 	const treeModels: Array<wgl.Model> = []
 	for (let i = 0; i < 0; i++) {
-		let treeMod = new wgl.Model(gl, null, treeMesh, mat.clone())
+		let treeMod = new wgl.Model(gl, treeMesh, mat.clone())
 		let x = -100 + Math.random() * 200
 		let z = -100 + Math.random() * 200
 		let fracX = (x + 100) / 200
@@ -169,13 +169,14 @@ export async function main() {
 	const animate = () => {
 
 		stats.update()
+
 		keyboardMoveControls.update()
 		rotationControls.update()
 		touchMoveControls.update()
 
 		analyser.update()
 
-		let levels = analyser.getLevels()
+		// let levels = analyser.getLevels()
 
 		// let newColor = [Math.pow(levels[0], 2), 0, 0]
 		// light2.setColor(newColor)
@@ -262,7 +263,7 @@ async function getTerrain(gl: WebGLRenderingContext, prog: wgl.ShaderProgram): P
 	let heightMat = wgl.Material.Material.Physical(gl)
 	heightMat.getAttribute('albedo').setValue([1, 1, 1])
 
-	let terrain = new wgl.Model(gl, prog, heightMesh, heightMat)
+	let terrain = new wgl.Model(gl, heightMesh, heightMat, prog)
 	terrain.setScale([100, 10, 100])
 	terrain.setPosition([0, 0, 0])
 	terrain.receivesLight = true

@@ -76,8 +76,18 @@ class Material extends attribute.Attributable<Attribute, MaterialAttributeMap, A
 	}
 }
 
+function Basic(gl: WebGLRenderingContext): Material {
+	return Material.Basic(gl)
+}
+
+function Physical(gl: WebGLRenderingContext): Material {
+	return Material.Physical(gl)
+}
+
 export {
 	Material,
+	Basic,
+	Physical,
 	AttributeNames,
 	Attribute
 }

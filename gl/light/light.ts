@@ -84,4 +84,12 @@ class Light extends attribute.Attributable<Attribute, LightAttributeMap, Attribu
 	}
 }
 
-export { Light, LightNames, Attribute, AttributeNames, LightUniformNames }
+function Point(gl: WebGLRenderingContext): Light {
+	return Light.Point(gl)
+}
+
+function Directional(gl: WebGLRenderingContext): Light {
+	return Light.Directional(gl)
+}
+
+export { Light, Point, Directional, LightNames, Attribute, AttributeNames, LightUniformNames }

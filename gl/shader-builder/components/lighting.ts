@@ -35,20 +35,6 @@ export function makeDirectionalLightStruct(): string {
 	};`
 }
 
-export function makePointLightArray(): string {
-	const lightTypeName = primitives.getLightTypeName('point')
-	const lightUniformName = primitives.getBuiltinUniformName('point')
-	const nLightsName = getNPointLightsName()
-	return `uniform ${lightTypeName} ${lightUniformName}[${nLightsName}];`
-}
-
-export function makeDirectionalLightArray(): string {
-	const lightTypeName = primitives.getLightTypeName('directional')
-	const lightUniformName = primitives.getBuiltinUniformName('directional')
-	const nLightsName = getNDirectionalLightsName()
-	return `uniform ${lightTypeName} ${lightUniformName}[${nLightsName}];`
-}
-
 export function PBR(): string {
 	const src = `
 

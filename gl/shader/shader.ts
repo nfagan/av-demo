@@ -5,7 +5,7 @@ import { UniformNames, UniformNameOrString, ShaderCoreUniformKinds, requireUnifo
 import { ShaderAttributeKinds, ShaderAttributes } from './attributes'
 import * as texture from '../texture/texture'
 
-export type UniformSettable = number | boolean | mat4 | vec3 | Array<number> | texture.Texture
+export type UniformSettable = number | boolean | mat4 | vec3 | Array<number> | texture.Texture | types.Integer
 
 enum ShaderTypes {
 	VERTEX,
@@ -127,6 +127,9 @@ class ShaderProgram extends Resource {
 		if (types.isNumber(value)) {
 			this.setf(name, value)
 
+		} else if (types.isInteger(value)) {
+			this.seti(name, value.get())
+
 		} else if (types.isBoolean(value)) {
 			this.setb(name, value)
 
@@ -152,7 +155,7 @@ class ShaderProgram extends Resource {
 		this.gl.uniform1i(this.getUniformLocation(name), value ? 1 : 0)
 	}
 
-	public seti(name: string, value: number): void {
+	private seti(name: string, value: number): void {
 		this.gl.uniform1i(this.getUniformLocation(name), value)
 	}
 

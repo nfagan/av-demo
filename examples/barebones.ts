@@ -23,10 +23,10 @@ export async function main() {
 	const rotationControls = new wgl.Controls.Orbit.Orbit2(mouseInput, camera)
 
 	const sphere = wgl.MeshFactory.create(gl, 'sphere')
-	const mat = wgl.Material.Material.Physical(gl)
-	const sphereModel = new wgl.Model(gl, null, sphere, mat)
-	const light = wgl.Light.Light.Point(gl)
-	const lightModel = new wgl.Model(gl, null, sphere, mat.clone())
+	const mat = wgl.Material.Physical(gl)
+	const sphereModel = new wgl.Model(gl, sphere, mat)
+	const light = wgl.Light.Point(gl)
+	const lightModel = new wgl.Model(gl, sphere, mat.clone())
 
 	renderer.setAspect(canvas.aspect)
 	renderer.setNearFar(0.1, 1000)

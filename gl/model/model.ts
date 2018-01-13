@@ -36,7 +36,7 @@ class Model extends Resource {
 	public onBeforeRender: RenderCallbackT
 	public onAfterRender: RenderCallbackT
 
-	constructor(gl: WebGLRenderingContext, program: ShaderProgram, mesh: Mesh, material: Material.Material) {
+	constructor(gl: WebGLRenderingContext, mesh: Mesh, material: Material.Material, program: ShaderProgram = null) {
 		super()
 		this.gl = gl
 		this.program = program

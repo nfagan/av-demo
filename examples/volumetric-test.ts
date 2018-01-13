@@ -88,11 +88,11 @@ export async function main() {
 	const sphere = wgl.MeshFactory.create(gl, 'sphere')
 	const quad = wgl.MeshFactory.create(gl, 'quad')
 	const mat = wgl.Material.Material.Physical(gl)
-	const sphereModel = new wgl.Model(gl, prog, sphere, mat)
-	const model2 = new wgl.Model(gl, prog, wgl.MeshFactory.create(gl, 'cube'), mat.clone())
+	const sphereModel = new wgl.Model(gl, sphere, mat, prog)
+	const model2 = new wgl.Model(gl, wgl.MeshFactory.create(gl, 'cube'), mat.clone(), prog)
 	const light = wgl.Light.Light.Point(gl)
-	const lightSphereModel = new wgl.Model(gl, basicProg, sphere, mat.clone())
-	const planeModel = new wgl.Model(gl, prog, wgl.MeshFactory.create(gl, 'quad'), mat.clone())
+	const lightSphereModel = new wgl.Model(gl, sphere, mat.clone(), basicProg)
+	const planeModel = new wgl.Model(gl, wgl.MeshFactory.create(gl, 'quad'), mat.clone(), prog)
 
 	const fboW = canvas.width*canvas.dpr/4
 	const fboH = canvas.height*canvas.dpr/4
@@ -282,7 +282,7 @@ export async function main() {
 		postProg.setUniform('uWeight', 0.008)
 		postProg.setUniform('uDecay', 1.0)
 		postProg.setUniform('uExposure', 1.0)
-		postProg.seti('uNumSamples', 25)
+		postProg.setUniform('uNumSamples', new wgl.util.types.Integer(25))
 		postProg.setUniform('uOcclusionTexture', occlusionTex)
 
 		occlusionTex.bind()

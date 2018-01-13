@@ -81,12 +81,12 @@ export async function main() {
 
 	const mat = wgl.Material.Material.Physical(gl)
 
-	const planeModel = new wgl.Model(gl, null, plane, mat)
-	const sphereModel = new wgl.Model(gl, null, sphere, mat)
-	const cottageModel = new wgl.Model(gl, null, firstObj, mat.clone())
-	const sun = new wgl.Model(gl, null, sphere, mat.clone())
-	const anchor = new wgl.Model(gl, null, sphere, mat.clone())
-	const skybox = new wgl.Model(gl, skyboxProg, skyboxMesh, mat.clone())
+	const planeModel = new wgl.Model(gl, plane, mat)
+	const sphereModel = new wgl.Model(gl, sphere, mat)
+	const cottageModel = new wgl.Model(gl, firstObj, mat.clone())
+	const sun = new wgl.Model(gl, sphere, mat.clone())
+	const anchor = new wgl.Model(gl, sphere, mat.clone())
+	const skybox = new wgl.Model(gl, skyboxMesh, mat.clone(), skyboxProg)
 
 	skybox.material.getAttribute('albedo').setValue(firstTex)
 
@@ -171,7 +171,7 @@ export async function main() {
 function getPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nLevels: number): Array<wgl.Model> {
 	let planeModels = []
 	for (let i: number = 0; i < nLevels; i++) {
-		let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material.clone())
+		let planeModel: wgl.Model = new wgl.Model(gl, ref.mesh, ref.material.clone(), ref.program)
 		planeModel.setPosition([0, -i-1, 0])
 		planeModel.setRotation([90, 0, 0])
 		planeModels.push(planeModel)
@@ -183,7 +183,7 @@ function getFarPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nModels: n
 	let planeModels: Array<wgl.Model> = []
 	for (let i: number = 0; i < nModels; i++) {
 		for (let j: number = 0; j < nModels; j++) {
-			let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material.clone())
+			let planeModel: wgl.Model = new wgl.Model(gl, ref.mesh, ref.material.clone(), ref.program)
 			planeModel.setPosition([i/2, j/2, -10])
 			planeModel.setScale(0.5)
 			planeModels.push(planeModel)

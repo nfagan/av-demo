@@ -28,7 +28,7 @@ export async function main() {
 
 	const mat = wgl.Material.Material.Physical(gl)
 	const sphere = wgl.MeshFactory.create(gl, 'quad')
-	const sphereModel = new wgl.Model(gl, null, sphere, mat)
+	const sphereModel = new wgl.Model(gl, sphere, mat)
 	const light = wgl.Light.Light.Point(gl)
 
 	sphereModel.setRotation([90, 0, 0])

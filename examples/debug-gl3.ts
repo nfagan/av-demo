@@ -5,7 +5,7 @@ import { mat4, vec4, vec3, glMatrix } from 'gl-matrix'
 function getPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nLevels: number): Array<wgl.Model> {
 	let planeModels = []
 	for (let i: number = 0; i < nLevels; i++) {
-		let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material.clone())
+		let planeModel: wgl.Model = new wgl.Model(gl, ref.mesh, ref.material.clone(), ref.program)
 		planeModel.setPosition(vec3.fromValues(0, -i-1, 0))
 		planeModel.setRotation(vec3.fromValues(90, 0, 0))
 		planeModels.push(planeModel)
@@ -17,7 +17,7 @@ function getFarPlaneModels(gl: WebGLRenderingContext, ref: wgl.Model, nModels: n
 	let planeModels: Array<wgl.Model> = []
 	for (let i: number = 0; i < nModels; i++) {
 		for (let j: number = 0; j < nModels; j++) {
-			let planeModel: wgl.Model = new wgl.Model(gl, ref.program, ref.mesh, ref.material.clone())
+			let planeModel: wgl.Model = new wgl.Model(gl, ref.mesh, ref.material.clone(), ref.program)
 			planeModel.setPosition(vec3.fromValues(i/2, j/2, -10))
 			planeModel.setScale(0.5)
 			planeModels.push(planeModel)
@@ -147,10 +147,10 @@ export async function main() {
 	const cubeMesh = wgl.MeshFactory.create(gl, 'cube', {finalize: true})
 	const mat = wgl.Material.Material.Physical(gl)
 
-	const planeModel = new wgl.Model(gl, prog, plane, mat)
-	const sphereModel = new wgl.Model(gl, prog, sphere, mat)
-	const cottageModel = new wgl.Model(gl, prog, firstObj, mat)
-	const bigSphere = new wgl.Model(gl, prog, sphere, mat)
+	const planeModel = new wgl.Model(gl, plane, mat, prog)
+	const sphereModel = new wgl.Model(gl, sphere, mat, prog)
+	const cottageModel = new wgl.Model(gl, firstObj, mat, prog)
+	const bigSphere = new wgl.Model(gl, sphere, mat, prog)
 
 	cottageModel.setPosition([-5, -5, -5])
 
