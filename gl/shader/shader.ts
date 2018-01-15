@@ -2,7 +2,7 @@ import { mat4, vec3 } from 'gl-matrix'
 import { Resource } from '../common/resource'
 import { vector, types } from '../util/util'
 import { UniformNames, UniformNameOrString, ShaderCoreUniformKinds, requireUniformString } from './uniforms'
-import { ShaderAttributeKinds, ShaderAttributes } from './attributes'
+import { ShaderAttributeKinds } from './attributes'
 import * as texture from '../texture/texture'
 
 export type UniformSettable = number | boolean | mat4 | vec3 | Array<number> | texture.Texture | types.Integer
@@ -78,18 +78,18 @@ class ShaderProgram extends Resource {
 	private gl: WebGLRenderingContext
 	private shaders: Array<Shader>
 	private program?: WebGLProgram
-	private attributes: ShaderAttributes
 	private _isBound: boolean = false
 	private uniformLocations: { [key: string]: WebGLUniformLocation }
+	private attributeLocations: { [key: string]: number }
 
 	public isValid: boolean = true
 	public isFinalized: boolean = false
 
 	constructor(gl: WebGLRenderingContext) {
 		super()
-		this.attributes = new ShaderAttributes()
 		this.gl = gl
 		this.uniformLocations = {}
+		this.attributeLocations = {}
 	}
 
 	public attach(shaders: Array<Shader>) {
@@ -100,7 +100,6 @@ class ShaderProgram extends Resource {
 		}
 		this.shaders = shaders
 		this.finalize()
-		this.getAttributeLocations()
 	}
 
 	public bind(): void {
@@ -188,21 +187,13 @@ class ShaderProgram extends Resource {
   		this.isFinalized = true
 	}
 
-	public getAttributeLocation(kind: ShaderAttributeKinds): number {
-		return this.attributes[kind].location
-	}
-
-	private getAttributeLocations(): void {
-		let attributes = this.attributes
-		const gl = this.gl
-		const program = this.program
-		//
-		//	@TODO: Avoid string indexing into attributes
-		//
-		let attribNames: Array<string> = Object.keys(attributes)
-		for (let attrib of attribNames) {
-			attributes[attrib].location = gl.getAttribLocation(program, attributes[attrib].name)
-		}
+	public getAttributeLocation(name: string): number {
+		let loc = this.attributeLocations[name]
+		if (loc !== undefined)
+			return loc
+		loc = this.gl.getAttribLocation(this.program, name)
+		this.attributeLocations[name] = loc
+		return loc
 	}
 
 	public getProgram(): WebGLProgram {

@@ -1,6 +1,6 @@
 import * as wgl from '../gl/web-gl'
 import * as waud from '../aud/web-audio'
-import { mat4, quat, vec3, glMatrix } from 'gl-matrix'
+import { mat4, quat, vec2, vec3, glMatrix } from 'gl-matrix'
 
 export async function main() {
 
@@ -32,7 +32,7 @@ export async function main() {
 
 	canvasElement.onclick = () => togglePlay()
 
-	keyboard.down(() => togglePlay(), wgl.Input.Keys.space)
+	keyboard.down(togglePlay, wgl.Input.Keys.space)
 
 	const scene = new wgl.Scene(gl)
 	const renderer = new wgl.renderers.functional(gl)
@@ -42,7 +42,7 @@ export async function main() {
 	const mouseInput = new wgl.Input.PointerLock(canvas.element)
 	const touchInput = new wgl.Input.Touch()
 	const keyboardMoveControls = new wgl.Controls.Movement.Keyboard(keyboard, camera, 10.0)
-	const touchMoveControls = new wgl.Controls.Movement.Touch(touchInput, camera, 10.0)
+	const touchMoveControls = new wgl.Controls.Movement.Touch(touchInput, camera, 30.0)
 
 	let rotationControls: any
 	
@@ -171,8 +171,11 @@ export async function main() {
 		stats.update()
 
 		keyboardMoveControls.update()
-		rotationControls.update()
 		touchMoveControls.update()
+		rotationControls.update()
+
+		camera.position[1] = 10
+		// camera.lookAt(sphere3.getPosition())
 
 		analyser.update()
 

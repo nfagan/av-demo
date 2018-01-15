@@ -1,72 +1,81 @@
 class Vertex {
 
-	private position: Float32Array
-	private uv: Float32Array
-	private normal: Float32Array
-	private positionCount: number = 0
-	private uvCount: number = 0
-	private normalCount: number = 0
+	private attributes: {[key: string]: Float32Array} = {}
 
 	constructor() {
-		this.position = new Float32Array(3)
-		this.uv = new Float32Array(2)
-		this.normal = new Float32Array(3)
+		//
 	}
 
 	public setPosition(pos: Float32Array): void {
 		this.assertValidArraySize(pos, 3, 'position')
-		this.position = pos
-		this.positionCount = 3
+		this.setAttribute('position', pos)
 	}
 
 	public setUV(uv: Float32Array): void {
 		this.assertValidArraySize(uv, 2, 'uv')
-		this.uv = uv
-		this.uvCount = 2
+		this.setAttribute('uv', uv)
 	}
 
 	public setNormal(norm: Float32Array): void {
-		this.assertValidArraySize(norm, 3, 'normals')
-		this.normal = norm
-		this.normalCount = 3
+		this.assertValidArraySize(norm, 3, 'normal')
+		this.setAttribute('normal', norm)
 	}
 
-	public sizePosition(): number {
-		return this.positionCount
+	public setAttribute(name: string, value: Float32Array): void {
+		this.attributes[name] = value
 	}
 
-	public sizeUV(): number {
-		return this.uvCount
-	}
-
-	public sizeNormal(): number {
-		return this.normalCount
+	public sizeof(name: string): number {
+		let attr = this.attributes[name]
+		return attr === undefined ? 0 : attr.length
 	}
 
 	public size(): number {
-		return this.sizePosition() + this.sizeNormal() + this.sizeUV()
+		let attrNames = this.getAttributeNames()
+		let sz = 0
+		for (let i = 0; i < attrNames.length; i++) {
+			sz += this.sizeof(attrNames[i])
+		}
+		return sz
 	}
 
 	public bytesPerElement(): number {
-		return this.position.BYTES_PER_ELEMENT
+		return Float32Array.BYTES_PER_ELEMENT
+	}
+
+	public getAttributeNames(): Array<string> {
+		return Object.keys(this.attributes)
 	}
 
 	public getInterleavedData(): Float32Array {
-		let data: Float32Array = new Float32Array(this.size())
-		let i: number = 0
-		for (let j: number = 0; j < this.positionCount; j++) {
-			data[i] = this.position[j]
-			i++
-		}
-		for (let j: number = 0; j < this.uvCount; j++) {
-			data[i] = this.uv[j]
-			i++
-		}
-		for (let j: number = 0; j < this.normalCount; j++) {
-			data[i] = this.normal[j]
-			i++
+		let data = new Float32Array(this.size())
+		let i = 0
+		let attrNames = this.getAttributeNames()
+		for (let j = 0; j < attrNames.length; j++) {
+			let name = attrNames[j]
+			let _data = this.attributes[name]
+			for (let k = 0; k < _data.length; k++) {
+				data[i] = _data[k]
+				i++
+			}
 		}
 		return data
+	}
+
+	public sizesMatch(b: Vertex): boolean {
+		let namesA = this.getAttributeNames().sort()
+		let namesB = b.getAttributeNames().sort()
+		if (namesA.length !== namesB.length)
+			return false
+		for (let i = 0; i < namesA.length; i++) {
+			let nameA = namesA[i]
+			let nameB = namesB[i]
+			if (nameA !== nameB)
+				return false
+			if (this.sizeof(nameA) !== b.sizeof(nameA))
+				return false
+		}		
+		return true
 	}
 
 	private assertValidArraySize(arr: Float32Array, size: number, type?: string) {
@@ -77,7 +86,6 @@ class Vertex {
 				instead was ${arr.length}`
 			throw new Error(message)
 		}
-
 	}
 }
 

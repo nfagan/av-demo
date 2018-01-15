@@ -32,6 +32,8 @@ export namespace Orbit {
 		private dts: vec2
 		private opts: OrbitOpts
 
+		public onBeforeRotate: (vel: vec2) => void
+
 		constructor(input: T, camera: Camera, opts?: OrbitOpts) {
 			this.input = input
 			this.camera = camera
@@ -48,6 +50,8 @@ export namespace Orbit {
 			this.totalVelocity = vec2.fromValues(0, 0)
 			this.delta = vec2.fromValues(0, 0)
 			this.dts = vec2.fromValues(0, 0)
+
+			this.onBeforeRotate = () => {}
 
 			this.opts = opts
 
@@ -92,6 +96,8 @@ export namespace Orbit {
 			vec2.add(totalVelocity, totalVelocity, velocity)
 
 			let targetVelocity = this.opts.smooth ? totalVelocity : velocity
+
+			this.onBeforeRotate(targetVelocity)
 
 			if (input.shouldInvert()) {
 				camera.rotate(-targetVelocity[0], targetVelocity[1])

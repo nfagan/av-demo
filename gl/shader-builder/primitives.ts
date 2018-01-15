@@ -1,9 +1,10 @@
 import * as uniforms from '../shader/uniforms'
-import { ShaderAttributeMap, ShaderAttributeKinds, ShaderAttributeDataType3D, ShaderAttributeDataTypeFuncT } from '../shader/attributes'
-import { ShaderVaryingMap } from '../shader/varying'
+import { ShaderAttributeKinds, ShaderAttributeDataType3D, ShaderAttributeDataTypeFuncT } from '../shader/attributes'
 import { GLSLTypeMap, GLSLPrecisionMap, LightTypesMap } from '../shader/types'
 import { types, common } from '../util/util'
 import { LightNames } from '../light/light'
+import { makeAttributeString } from '../shader/attributes'
+import { makeVaryingString } from '../shader/varying'
 
 export type uniformT = {
 	name: uniforms.UniformNames,
@@ -53,11 +54,11 @@ export type PipelineSource = {
 export const defaultAttributeMapFunc = ShaderAttributeDataType3D
 
 export function getAttributeName(name: ShaderAttributeKinds): string {
-	return ShaderAttributeMap.getAttribute(name)
+	return makeAttributeString(name)
 }
 
 export function getVaryingName(name: ShaderAttributeKinds): string {
-	return ShaderVaryingMap.getVarying(name)
+	return makeVaryingString(name)
 }
 
 export function getUniformName(name: uniforms.UniformNameOrString): string {
@@ -192,8 +193,8 @@ export function makeHeader(mapFunc: ShaderAttributeDataTypeFuncT,
 }
 
 export function makePassedAttribute(mapFunc: ShaderAttributeDataTypeFuncT, attr: ShaderAttributeKinds): string {
-	let varyingName = ShaderVaryingMap.getVarying(attr)
-	let attrName = ShaderAttributeMap.getAttribute(attr)
+	let varyingName = makeVaryingString(attr)
+	let attrName = makeAttributeString(attr)
 	return `${varyingName} = ${attrName};`
 }
 

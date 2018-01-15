@@ -1,6 +1,7 @@
 import { Vertex, Topologies } from './vertex'
 import { Resource } from '../common/resource'
 import { ShaderProgram, ShaderAttributeKinds } from '../shader/shader'
+import { makeAttributeString } from '../shader/attributes'
 
 class Mesh extends Resource {
 
@@ -25,7 +26,7 @@ class Mesh extends Resource {
 	public addVertex(vertex: Vertex): void {
 		this.assertNotFinalized('addVertex')
 		if (this.vertices.length !== 0) {
-			if (vertex.size() !== this.vertices[0].size())
+			if (!vertex.sizesMatch(this.vertices[0]))
 				throw new Error('All vertices must have consistent numbers of elements.')
 		}
 		this.vertices.push(vertex)
@@ -89,42 +90,23 @@ class Mesh extends Resource {
 
 		const gl = this.gl
 		let vert0 = this.vertices[0]
-		let stride: number = vert0.size()
-		let bytes: number = vert0.bytesPerElement()
-		let offset: number = 0
-		let nIndices: number = this.indices.length
-		let attrib: number = 0
+		let stride = vert0.size()
+		let bytes = vert0.bytesPerElement()
+		let offset = 0
+		let nIndices = this.indices.length
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo)
 
-		//	position
-		let posLoc: number = program.getAttributeLocation('position')
-		const sizePos = vert0.sizePosition()
-		gl.enableVertexAttribArray(posLoc)
-		gl.vertexAttribPointer(posLoc, sizePos, gl.FLOAT, false, stride*bytes, offset*bytes)
-		offset += sizePos
+		let attrs = vert0.getAttributeNames()
 
-		//	uv
-		if (vert0.sizeUV() > 0) {
-			let uvLoc: number = program.getAttributeLocation('uv')
-			const sizeUV = vert0.sizeUV()
-			if (uvLoc !== -1) {
-				gl.enableVertexAttribArray(uvLoc)
-				gl.vertexAttribPointer(uvLoc, sizeUV, gl.FLOAT, false, stride*bytes, offset*bytes)
+		for (let i = 0; i < attrs.length; i++) {
+			let loc = program.getAttributeLocation(makeAttributeString(attrs[i]))
+			const size = vert0.sizeof(attrs[i])
+			if (loc !== -1) {
+				gl.enableVertexAttribArray(loc)
+				gl.vertexAttribPointer(loc, size, gl.FLOAT, false, stride*bytes, offset*bytes)
 			}
-			offset += sizeUV
-		}
-
-		//	normals
-		if (vert0.sizeNormal() > 0) {
-			let normLoc: number = program.getAttributeLocation('normal')
-			const sizeNorm = vert0.sizeNormal()
-			if (normLoc !== -1) {
-				gl.enableVertexAttribArray(normLoc)
-				gl.vertexAttribPointer(normLoc, sizeNorm, gl.FLOAT, false, stride*bytes, offset*bytes)
-				// offset += 3
-			}
-			offset += sizeNorm
+			offset += size
 		}
 
 		//	indices
