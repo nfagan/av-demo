@@ -7,8 +7,10 @@ import * as time from './time-util'
 import * as assert from './assert-util'
 import * as defaults from './default-util'
 import * as image from './image-util'
+import * as array from './array-util'
 
 export {
+	array,
 	assert,
 	defaults,
 	image,

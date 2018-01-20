@@ -94,6 +94,14 @@ export function isPow2(n: number) {
 	return true
 }
 
+export function arraySum(arr: Array<number>): number {
+	let sum = 0;
+	for (let i = 0; i < arr.length; i++) {
+		sum += arr[i]
+	}
+	return sum
+}
+
 export function lookAt(out: glm.mat4, eye: glm.vec3, center: glm.vec3, up: glm.vec3): glm.mat4 {
 	let x0, x1, x2, y0, y1, y2, z0, z1, z2, len;
 	let eyex = eye[0];
@@ -170,4 +178,65 @@ export function lookAt(out: glm.mat4, eye: glm.vec3, center: glm.vec3, up: glm.v
 	out[15] = 1;
 
 	return out;
+}
+
+export function extractPosition(a: glm.mat4): glm.vec3 {
+	return glm.vec3.fromValues(a[12], a[13], a[14])
+}
+
+export function quatToRotationMatrix(q: glm.quat, te?: glm.mat4): glm.mat4 {
+	//	https://github.com/mrdoob/three.js/blob/dev/src/math/Matrix4.js
+	let x = q[0], y = q[1], z = q[1], w = q[3]
+	let x2 = x + x, y2 = y + y, z2 = z + z
+	let xx = x * x2, xy = x * y2, xz = x * z2
+	let yy = y * y2, yz = y * z2, zz = z * z2
+	let wx = w * x2, wy = w * y2, wz = w * z2
+
+	const setLastCol = te === undefined || te === null
+
+	if (setLastCol)
+		te = glm.mat4.create()
+
+	te[ 0 ] = 1 - ( yy + zz )
+	te[ 4 ] = xy - wz
+	te[ 8 ] = xz + wy
+
+	te[ 1 ] = xy + wz
+	te[ 5 ] = 1 - ( xx + zz )
+	te[ 9 ] = yz - wx
+
+	te[ 2 ] = xz - wy
+	te[ 6 ] = yz + wx
+	te[ 10 ] = 1 - ( xx + yy )
+
+	if (setLastCol) {
+		te[ 3 ] = 0
+		te[ 7 ] = 0
+		te[ 11 ] = 0
+	}
+
+	// bottom row
+	te[ 12 ] = 0
+	te[ 13 ] = 0
+	te[ 14 ] = 0
+	te[ 15 ] = 1
+
+	return te
+}
+
+export function extractRotationMat3(a: glm.mat4): glm.mat3 {
+	return glm.mat3.fromValues(
+		//
+		a[0],
+		a[1],
+		a[2],
+		//
+		a[4],
+		a[5],
+		a[6],
+		//
+		a[8],
+		a[9],
+		a[10]
+	)
 }

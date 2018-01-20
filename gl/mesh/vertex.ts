@@ -1,6 +1,9 @@
+import { makeAttributeString, requireAttributeString } from '../shader/attributes'
+
 class Vertex {
 
 	private attributes: {[key: string]: Float32Array} = {}
+	private names: Array<string> = []
 
 	constructor() {
 		//
@@ -8,21 +11,45 @@ class Vertex {
 
 	public setPosition(pos: Float32Array): void {
 		this.assertValidArraySize(pos, 3, 'position')
-		this.setAttribute('position', pos)
+		const name = makeAttributeString(requireAttributeString('position'))
+		this.setAttribute(name, pos)
 	}
 
 	public setUV(uv: Float32Array): void {
 		this.assertValidArraySize(uv, 2, 'uv')
-		this.setAttribute('uv', uv)
+		const name = makeAttributeString(requireAttributeString('uv'))
+		this.setAttribute(name, uv)
 	}
 
 	public setNormal(norm: Float32Array): void {
 		this.assertValidArraySize(norm, 3, 'normal')
-		this.setAttribute('normal', norm)
+		const name = makeAttributeString(requireAttributeString('normal'))
+		this.setAttribute(name, norm)
+	}
+
+	public setWeights(weights: Float32Array): void {
+		this.assertValidArraySize(weights, 3, 'weights')
+		const name = makeAttributeString(requireAttributeString('joint_weight'))
+		this.setAttribute(name, weights)
+	}
+
+	public setIndices(indices: Float32Array): void {
+		this.assertValidArraySize(indices, 3, 'indices')
+		const name = makeAttributeString(requireAttributeString('joint_index'))
+		this.setAttribute(name, indices)
 	}
 
 	public setAttribute(name: string, value: Float32Array): void {
+		let exists = this.hasAttribute(name)
 		this.attributes[name] = value
+		if (exists)
+			return
+		this.names.push(name)
+		this.names.sort()
+	}
+
+	public hasAttribute(name: string): boolean {
+		return this.attributes[name] !== undefined
 	}
 
 	public sizeof(name: string): number {
@@ -44,7 +71,7 @@ class Vertex {
 	}
 
 	public getAttributeNames(): Array<string> {
-		return Object.keys(this.attributes)
+		return this.names
 	}
 
 	public getInterleavedData(): Float32Array {
@@ -63,8 +90,8 @@ class Vertex {
 	}
 
 	public sizesMatch(b: Vertex): boolean {
-		let namesA = this.getAttributeNames().sort()
-		let namesB = b.getAttributeNames().sort()
+		let namesA = this.getAttributeNames()
+		let namesB = b.getAttributeNames()
 		if (namesA.length !== namesB.length)
 			return false
 		for (let i = 0; i < namesA.length; i++) {

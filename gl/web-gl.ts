@@ -17,6 +17,7 @@ import * as math from './math/wgl-math'
 import * as util from './util/util'
 import { Canvas } from './common/canvas'
 import * as Loaders from './loaders/loaders'
+import * as parsers from './parsers/parsers'
 import * as Input from './input/input'
 import * as Controls from './input/camera-controls'
 import * as capabilities from './common/capabilities'
@@ -45,6 +46,7 @@ export {
 	Vertex,
 	Topologies,
 	renderers,
+	parsers,
 	Scene,
 	ShaderBuilder,
 	ShaderSource,

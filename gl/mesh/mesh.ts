@@ -100,7 +100,7 @@ class Mesh extends Resource {
 		let attrs = vert0.getAttributeNames()
 
 		for (let i = 0; i < attrs.length; i++) {
-			let loc = program.getAttributeLocation(makeAttributeString(attrs[i]))
+			let loc = program.getAttributeLocation(attrs[i])
 			const size = vert0.sizeof(attrs[i])
 			if (loc !== -1) {
 				gl.enableVertexAttribArray(loc)

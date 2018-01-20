@@ -11,6 +11,15 @@ const shaders: {[key: string]: shader.ShaderProgram} = {}
 
 export function fromModel(model: Model): shader.ShaderProgram {
 
+	const sources = getSource(model)
+
+	return fromSource(model.gl, sources.vertex, sources.fragment)
+}
+
+type sourceReturnT = {vertex: primitives.VertexSource, fragment: primitives.FragmentSource}
+
+export function getSource(model: Model): sourceReturnT {
+
 	let attributes: shader.ShaderAttributeKinds[] = ['position']
 	let varying: shader.ShaderAttributeKinds[] = []
 	let fragUniforms: primitives.uniformT[] = []
@@ -117,7 +126,11 @@ export function fromModel(model: Model): shader.ShaderProgram {
 		main: fragMain
 	}
 
-	return fromSource(model.gl, vertexSource, fragSource)
+	return {
+		vertex: vertexSource,
+		fragment: fragSource
+	}
+
 }
 
 export function fromSource(gl: WebGLRenderingContext, vert: primitives.VertexSource, frag: primitives.FragmentSource): shader.ShaderProgram {

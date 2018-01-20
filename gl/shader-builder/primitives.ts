@@ -1,7 +1,7 @@
 import * as uniforms from '../shader/uniforms'
 import { ShaderAttributeKinds, ShaderAttributeDataType3D, ShaderAttributeDataTypeFuncT } from '../shader/attributes'
 import { GLSLTypeMap, GLSLPrecisionMap, LightTypesMap } from '../shader/types'
-import { types, common } from '../util/util'
+import { types, common, array } from '../util/util'
 import { LightNames } from '../light/light'
 import { makeAttributeString } from '../shader/attributes'
 import { makeVaryingString } from '../shader/varying'
@@ -30,7 +30,7 @@ export type VertexSource = {
 	uniforms: uniformT[],
 	userUniforms: userUniformT[],
 
-	attributeMapFunc: ShaderAttributeDataTypeFuncT
+	attributeMapFunc?: ShaderAttributeDataTypeFuncT
 
 	body: Array<makeFuncT> | makeFuncT,
 	main: Array<makeFuncT> | makeFuncT
@@ -203,12 +203,12 @@ export function makePassedAttributes(mapFunc: ShaderAttributeDataTypeFuncT, attr
 }
 
 export function makeFuncOrArrayFunc(src: Array<string>, funcs: Array<makeFuncT> | makeFuncT): void {
-	funcs = common.ensureArray(funcs)
+	funcs = array.ensureArray(funcs)
 	funcs.map(func => src.push(func()))
 }
 
 export function makeMain(funcs: Array<makeFuncT> | makeFuncT): string {
-	funcs = common.ensureArray(funcs)
+	funcs = array.ensureArray(funcs)
 
 	let lines = ['void main() {']
 	let statements: Array<string> = []

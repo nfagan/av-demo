@@ -12,7 +12,11 @@ export function make(source: primitives.VertexSource): string {
 	const varyings = source.varyings
 	const uns = source.uniforms
 	const userUns = source.userUniforms
-	const mapFunc = source.attributeMapFunc
+	let mapFunc = source.attributeMapFunc
+
+	if (mapFunc === undefined)
+		mapFunc = primitives.defaultAttributeMapFunc
+
 	const head = primitives.makeHeader(mapFunc, attrs, varyings, uns, userUns)
 
 	src.push(head)

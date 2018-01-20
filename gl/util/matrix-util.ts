@@ -1,7 +1,9 @@
 import * as glm from 'gl-matrix'
 import { vector, types } from './util'
+import * as math from '../math/wgl-math'
+import { decompose, recompose, compositionT, lerp, requireCompleteCompositionT } from './matrix-composition-util'
 
-export class transform {
+class transform {
 
 	data: glm.mat4
 
@@ -26,6 +28,11 @@ export class transform {
 		return this
 	}
 
+	public quatRotate(q: glm.quat): transform {
+		math.quatToRotationMatrix(q, this.data)
+		return this
+	}
+
 	public scale(val: types.vec3Convertible): transform {
 		val = vector.requireVec3(val)
 		glm.mat4.scale(this.data, this.data, val)
@@ -44,4 +51,13 @@ export class transform {
 		return glm.mat4.copy(glm.mat4.create(), this.data)
 	}
 
+}
+
+export {
+	transform,
+	lerp,
+	decompose,
+	recompose,
+	compositionT,
+	requireCompleteCompositionT
 }

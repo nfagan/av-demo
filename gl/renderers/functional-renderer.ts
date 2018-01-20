@@ -225,11 +225,12 @@ export default class extends base {
 	}
 
 	public conditionalBindProgram(prog: Shader.ShaderProgram, force: boolean = false): boolean {
+		const isNullProg = prog === null
 		let isNullLastProgram = this.lastProgram === null
 		let isNewProgram = force || isNullLastProgram || !Shader.ShaderProgram.equals(prog, this.lastProgram)
 		if (isNewProgram) {
 			if (!isNullLastProgram && this.lastProgram.isBound()) this.lastProgram.unbind()
-			if (!prog.isBound()) prog.bind()
+			if (!isNullProg && !prog.isBound()) prog.bind()
 		}
 		this.lastProgram = prog
 		return isNewProgram
