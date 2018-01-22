@@ -5,8 +5,9 @@ import { mat4, vec4 } from 'gl-matrix'
 import { assertNotNaN, assertInteger, assertNValues } from '../util/assert-util';
 import * as math from '../math/wgl-math'
 import * as matrix from '../util/matrix-util'
+import * as constants from '../shader/constants'
 import { Skeleton, Joint, JointTransform } from '../animation/skeleton'
-import { KeyFrames, SkeletalAnimation } from '../animation/animator'
+import { KeyFrames, SkeletalAnimation } from '../animation/skeletal-animator'
 
 type jointWeightT = {weights: Array<number>, ids: Array<number>}
 type joinPackedDataT = { [key:string]: {data: Array<number>, stride: number, offset: number} }
@@ -15,51 +16,41 @@ type jointSkeletonT = {name: string, index: number, inverseBindT: mat4, children
 type keyFrameT = {[key: string]: KeyFrames}
 type skeletonReturnT = {keyFrames: keyFrameT, animation: SkeletalAnimation, skeleton: Skeleton, vertexData: Array<jointWeightT>}
 type keyFramePrimitiveT = {times: Array<number>, transforms: Array<mat4>}
-type parseReturnT = {mesh: Mesh, skeleton: Skeleton, animation: SkeletalAnimation}
+type parseReturnT = {mesh: Mesh, transform: mat4, skeleton: Skeleton, animation: SkeletalAnimation}
+type sceneTransformReturnT = {[key: string]: mat4}
 
-export function collada(gl: WebGLRenderingContext, data: string): parseReturnT {
+export function collada(gl: WebGLRenderingContext, data: string): Array<parseReturnT> {
 
     const dom = new DOMParser()
     const xml = dom.parseFromString(data, 'text/xml')
 
     checkParseError(xml)
 
-    const geometries = xml.getElementsByTagName('library_geometries')
+    const geometryLibrary = xml.getElementsByTagName('library_geometries')
+    assertNElements(geometryLibrary, 1, 'library_geometries')
+    const geometries = geometryLibrary[0].getElementsByTagName('geometry')
+    
+    const out: Array<parseReturnT> = []
 
-    assertNElements(geometries, 1, 'library_geometries')
+    const sceneTransforms = parseVisualSceneMatrices(xml)
 
-    const geometry = geometries[0]
-    const meshes = geometry.getElementsByTagName('mesh')
-    const verts: Array<Vertex> = []
-    const indices: Array<number> = []
-
-    if (meshes.length !== 1)
-        throw new Error('Multi-meshes not yet supported.')
-
-    const animation = parseOneMesh(xml, meshes[0], verts, indices)
-
-    const mesh = new Mesh(gl)
-
-    for (let vert of verts) {
-        mesh.addVertex(vert)
+    for (const geometry of geometries) {
+        const meshData = parseOneMesh(gl, xml, geometry, sceneTransforms)
+        out.push(meshData)
     }
 
-    mesh.setTopology(Topologies.TRIANGLES)
-
-    if (indices.length > 0) {
-        mesh.setIndices(Uint16Array.from(indices))
-    }
-
-    mesh.finalize()
-
-    return {
-        mesh,
-        skeleton: animation.skeleton,
-        animation: animation.animation
-    }
+    return out
 }
 
-function parseOneMesh(xml: Document, meshElement: Element, allVerts: Array<Vertex>, allVertIndices: Array<number>): skeletonReturnT {
+function parseOneMesh(gl: WebGLRenderingContext, 
+    xml: Document, 
+    geometryElement: Element, 
+    sceneTransforms: sceneTransformReturnT): parseReturnT {
+
+    const allVerts: Array<Vertex> = []
+    const allVertIndices: Array<number> = []
+
+    const meshElement = requireOneTag(geometryElement, 'mesh', 'mesh data')
 
     const _vertexInfo = meshElement.getElementsByTagName('polylist')
 
@@ -134,9 +125,7 @@ function parseOneMesh(xml: Document, meshElement: Element, allVerts: Array<Verte
     //
 
     const animationData = parseSkeleton(xml)
-    const hasAnimationData = animationData.vertexData.length !== 0
-
-    // debugger
+    const hasAnimationData = animationData.animation !== null
 
     //
     //  vertex data
@@ -152,8 +141,6 @@ function parseOneMesh(xml: Document, meshElement: Element, allVerts: Array<Verte
         throw new Error(`Mesh must have "${posAlias}" attribute.`)
 
     let vertexIndex = 0
-
-    // debugger
 
     for (let i = 0; i < vIndices.length; i += stride) {
         const inds: Array<number> = []
@@ -197,21 +184,6 @@ function parseOneMesh(xml: Document, meshElement: Element, allVerts: Array<Verte
                 vertData[k] = dat
             }
 
-            // //
-            // //  correction
-            // //
-            // if (alias === 'VERTEX') {
-            //     let _vertData = vec4.create()
-            //     for (let k = 0; k < 3; k++) _vertData[k] = vertData[k]
-            //     _vertData[3] = 1
-            //     const trans = new matrix.transform().rotate(math.radians(-90), [1, 0, 0]).mat()
-            //     _vertData = vec4.transformMat4(_vertData, _vertData, trans)
-            //     for (let k = 0; k < 3; k++) vertData[k] = _vertData[k]
-            // }
-            //
-            //
-            //
-
             if (alias === 'VERTEX')
                 vert.setPosition(vertData)
             else if (alias === 'NORMAL')
@@ -237,19 +209,106 @@ function parseOneMesh(xml: Document, meshElement: Element, allVerts: Array<Verte
         allVerts.push(vert)
     }
 
-    return animationData
+    //
+    //  build mesh
+    //
+
+    const mesh = new Mesh(gl)
+
+    for (let vert of allVerts) {
+        mesh.addVertex(vert)
+    }
+
+    mesh.setTopology(Topologies.TRIANGLES)
+
+    if (allVertIndices.length > 0) {
+        mesh.setIndices(Uint16Array.from(allVertIndices))
+    }
+
+    mesh.finalize()
+
+    //
+    //  parse transform
+    //
+
+    const meshId = geometryElement.getAttribute('id')
+
+    let meshTransform = sceneTransforms[meshId]
+
+    if (meshTransform === undefined)
+        meshTransform = mat4.create()
+
+    return {
+        mesh,
+        transform: meshTransform,
+        animation: animationData.animation,
+        skeleton: animationData.skeleton,
+    }
+}
+
+function parseVisualSceneMatrices(xml: Document): sceneTransformReturnT {
+    const visualScenes = xml.querySelector('library_visual_scenes')
+    const matrixMap: sceneTransformReturnT = {}
+
+    if (!visualScenes) {
+        console.warn('No visual scene node present.')
+        return matrixMap
+    }
+
+    const visualScene = requireOneTag(visualScenes, 'visual_scene', 'visual scene')
+    const nodes = visualScene.getElementsByTagName('node')
+
+    for (const node of nodes) {
+        const nodeId = node.getAttribute('id')
+        const matrix = node.querySelector('matrix')
+        const link = node.querySelector('instance_geometry')
+
+        if (!matrix || !link) {
+            continue
+        }
+
+        const url = link.getAttribute('url')
+
+        if (url === '') {
+            console.warn(`No url was provided for node "${nodeId}".`)
+            continue
+        }
+
+        const trans = parseInnerHTMLToNumbers(matrix, parseFloat)
+        const id = url.substr(1, url.length-1)
+        matrixMap[id] = getMat4FromLinearData(trans)
+    }
+
+    return matrixMap 
 }
 
 function parseSkeleton(xml: Document): skeletonReturnT {
 
     const libControllers = xml.getElementsByTagName('library_controllers')
 
-    if (libControllers.length === 0)
-        return
+    const nullSrc: skeletonReturnT = {
+        animation: null,
+        keyFrames: null,
+        skeleton: null,
+        vertexData: null
+    }
+
+    if (libControllers.length === 0) {
+        return nullSrc
+    }
     
     assertNElements(libControllers, 1, 'library controllers')
 
-    const controller = requireOneTag(libControllers[0], 'controller', 'animation controllers')
+    const controllers = libControllers[0].getElementsByTagName('controller')
+
+    if (controllers.length === 0){
+        return nullSrc
+    } else {
+        if (controllers.length !== 1)
+            throw new Error('Multiple animation sources not yet supported.')
+    }
+
+    const controller = controllers[0]
 
     const jointData: jointDataT = {}
 
@@ -300,14 +359,6 @@ function parseSkeleton(xml: Document): skeletonReturnT {
         const name = jointNames[j]
         const ind = j * invBindMatStride
         const invBindMat = getMat4FromLinearData(inverseBindMatrices, ind)
-        // //
-        // //  correction
-        // //
-        // const trans = new matrix.transform().rotate(math.radians(-90), [1, 0, 0]).mat()
-        // invBindMat = mat4.mul(invBindMat, invBindMat, trans)
-        // //
-        // //
-        // //
         jointData[name] = {
             index: j,
             inverseBindT: invBindMat
@@ -355,6 +406,7 @@ function parseSkeleton(xml: Document): skeletonReturnT {
 
     let vJointDataInd = 0
     let vJointData: Array<jointWeightT> = []
+    const nInfluencers = constants.N_JOINT_INFLUENCES_PER_VERTEX
 
     for (let i = 0; i < vCounts.length; i++) {
         const currentNAffected = vCounts[i]
@@ -367,7 +419,7 @@ function parseSkeleton(xml: Document): skeletonReturnT {
             vertData.ids.push(jointId)
             vJointDataInd += 2
         }
-        vJointData.push(requireNWeights(vertData, 3))
+        vJointData.push(requireNWeights(vertData, nInfluencers))
     }
 
     //
@@ -532,6 +584,20 @@ function requireNWeights(vertData: jointWeightT, N: number): jointWeightT {
     }
     return fixedData
 }
+
+function parseNumbers(data: Array<string>, func: (a: string) => number): Array<number> {
+    const out: Array<number> = []
+    for (let i = 0; i < data.length; i++) {
+        const val = func(data[i])
+        if (!isNaN(val))
+            out.push(val)
+    }
+    return out
+}
+
+function parseInnerHTMLToNumbers(el: Element, parseFunc: (a: string) => number, splitOn: string = ' '): Array<number> {
+    return parseNumbers(el.innerHTML.split(splitOn), parseFunc)
+} 
 
 function requireOneTag(el: Element | Document, tagName: string, alias: string): Element {
     let child = el.getElementsByTagName(tagName)

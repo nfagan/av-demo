@@ -1,7 +1,7 @@
 import * as glm from 'gl-matrix'
 import { vector, types } from './util'
 import * as math from '../math/wgl-math'
-import { decompose, recompose, compositionT, lerp, requireCompleteCompositionT } from './matrix-composition-util'
+import { decompose, recompose, compositionT, slerp, requireCompleteCompositionT } from './matrix-composition-util'
 
 class transform {
 
@@ -55,7 +55,7 @@ class transform {
 
 export {
 	transform,
-	lerp,
+	slerp,
 	decompose,
 	recompose,
 	compositionT,

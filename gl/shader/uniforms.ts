@@ -4,7 +4,7 @@ import * as _Material from '../material/material'
 import * as _Shader from './shader'
 import { Stream } from 'stream';
 
-export type ShaderCoreUniformKinds = 'model' | 'view' | 'projection' | 'camera_position'
+export type ShaderCoreUniformKinds = 'model' | 'view' | 'projection' | 'camera_position' | 'joint_transforms'
 
 export type UniformNames = _Material.AttributeNames | _Light.LightUniformNames | ShaderCoreUniformKinds
 
@@ -24,6 +24,9 @@ export class Map {
 		'mask': 'mask',
 		'point': 'point_lights',
 		'directional': 'directional_lights',
+
+		//	animation
+		'joint_transforms': 'joint_transforms',
 
 		//	core
 		'model': 'model',

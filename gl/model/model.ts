@@ -1,12 +1,13 @@
 import { Resource } from '../common/resource'
 import { Mesh } from '../mesh/mesh'
-import { mat4, vec3, glMatrix } from 'gl-matrix'
+import { mat4, quat, vec3, glMatrix } from 'gl-matrix'
 import { ShaderProgram } from '../shader/shader'
 import { matrix, types, vector } from '../util/util'
 import * as math from '../math/wgl-math'
 import * as Material from '../material/material'
+import { SkeletalAnimation } from '../animation/skeletal-animator'
 
-export type RenderCallbackT = () => void
+export type RenderCallbackT = (a: Model) => void
 
 class Model extends Resource {
 
@@ -20,12 +21,16 @@ class Model extends Resource {
 	private parent: Model
 	private children: { [key: string]: Model }
 
-	private position: vec3
-	private rotation: vec3
-	private scale: vec3
-	private transform: matrix.transform
+	public position: vec3
+	public rotation: vec3
+	public orientation: quat
+	public scale: vec3
+	public transform: matrix.transform
 
 	public order: number
+
+	//	Animation
+	public animation: SkeletalAnimation
 
 	//	Properties
 	public receivesLight: boolean
@@ -45,6 +50,7 @@ class Model extends Resource {
 		this.position = vec3.fromValues(0, 0, 0)
 		this.rotation = vec3.fromValues(0, 0, 0)
 		this.scale = vec3.fromValues(1, 1, 1)
+		this.orientation = quat.create()
 		this.alias = ''
 		this.transform = new matrix.transform
 		this.order = 0
@@ -57,8 +63,16 @@ class Model extends Resource {
 		this.receivesShadow = true
 		this.visible = true
 
-		this.onBeforeRender = () => {}
-		this.onAfterRender = () => {}
+		//	events
+		this.onBeforeRender = (a: this) => {}
+		this.onAfterRender = (a: this) => {}
+
+		//	animation
+		this.animation = null
+	}
+
+	public hasAnimation(): boolean {
+		return this.animation !== null && this.animation !== undefined
 	}
 
 	public setMesh(mesh: Mesh): void { 
@@ -74,7 +88,8 @@ class Model extends Resource {
 	}
 
 	public setRotation(rot: types.vec3Convertible): void {
-		this.rotation = vector.requireVec3(rot)
+		const vrot = vector.requireVec3(rot)
+		this.orientation = quat.fromEuler(this.orientation, vrot[0], vrot[1], vrot[2])
 	}
 
 	public setScale(scale: types.vec3Convertible): void {
@@ -83,6 +98,7 @@ class Model extends Resource {
 
 	public getPosition(): vec3 { return this.position }
 	public getRotation(): vec3 { return this.rotation }
+	public getOrientation(): quat { return this.orientation }
 	public getScale(): vec3 { return this.scale }
 
 	public getWorldMatrix(): mat4 {
@@ -94,18 +110,16 @@ class Model extends Resource {
 	}
 
 	public getLocalMatrix(): mat4 {
-		let trans = this.transform
-		let pos = this.position
-		let rot = this.rotation
-		let scl = this.scale
-		
-		return trans.identity()
-			.translate(pos)
-			.rotate(math.radians(rot[0]), [1, 0, 0])
-			.rotate(math.radians(rot[1]), [0, 1, 0])
-			.rotate(math.radians(rot[2]), [0, 0, 1])
-			.scale(scl)
-			.mat()
+		const trans = this.transform.data
+		const position = this.position
+		const orientation = this.orientation
+		const scale = this.scale
+
+		return matrix.recompose(trans, {
+			quaternion: orientation,
+			translation: position,
+			scale
+		})
 	}
 
 	public addChild(model: Model): void {

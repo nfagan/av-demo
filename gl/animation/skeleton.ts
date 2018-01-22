@@ -23,9 +23,11 @@ export class JointTransform {
     }
 
     public static fromMat4(a: mat4): JointTransform {
-        const comp = matrix.decompose(a)
-        if (!comp.success)
-            throw new Error(`Failed to decompose joint-transformation matrix.`)
+        let comp = matrix.decompose(a)
+        if (!comp.success) {
+            console.error('Failed to decompose joint-transformation matrix.')
+            comp = matrix.requireCompleteCompositionT(comp)
+        }
         const trans = new JointTransform(comp)
         return trans
     }

@@ -209,13 +209,13 @@ export function decompose(matrix: mat4): compositionT {
     }
 }
 
-function lerpVec3(out: vec3, a: vec3, b: vec3, amt: number): vec3 {
+function lerp(out: Float32Array, a: Float32Array, b: Float32Array, amt: number) {
     for (let i = 0; i < out.length; i++)
         out[i] = a[i] + (b[i] - a[i]) * amt
     return out
 }
 
-export function lerp(a: compositionT, b: compositionT, amt: number): compositionT {
+export function slerp(a: compositionT, b: compositionT, amt: number): compositionT {
     //
     //  @TODO: Add complete set of interpolations!
     //
@@ -223,10 +223,10 @@ export function lerp(a: compositionT, b: compositionT, amt: number): composition
     const a_ = requireCompleteCompositionT(copyCompositionT(a))
     const b_ = requireCompleteCompositionT(copyCompositionT(b))
     
-    out.quaternion = quat.lerp(out.quaternion, a_.quaternion, b_.quaternion, amt)
+    out.quaternion = quat.slerp(out.quaternion, a_.quaternion, b_.quaternion, amt)
     
-    lerpVec3(out.translation, a_.translation, b_.translation, amt)
-    lerpVec3(out.scale, a_.scale, b_.scale, amt)
+    lerp(out.translation, a_.translation, b_.translation, amt)
+    lerp(out.scale, a_.scale, b_.scale, amt)
 
     return out
 }

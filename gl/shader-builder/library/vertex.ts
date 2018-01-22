@@ -7,3 +7,12 @@ export const MVPMat4: primitives.uniformT[] = [
 	{name: 'view', kind: 'mat4'},
 	{name: 'projection', kind: 'mat4'}
 ]
+
+export function jointTransforms(N: number): primitives.uniformT {
+	return {
+		name: 'joint_transforms',
+		kind: 'mat4',
+		isArray: true,
+		length: N
+	}
+}

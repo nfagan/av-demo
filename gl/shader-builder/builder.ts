@@ -5,7 +5,9 @@ import * as primitives from './primitives'
 import * as vertex from './vertex'
 import * as fragment from './fragment'
 import * as constants from '../shader/constants'
-import { types, common } from '../util/util'
+import { types, common, attribute } from '../util/util'
+
+type sourceReturnT = {vertex: primitives.VertexSource, fragment: primitives.FragmentSource}
 
 const shaders: {[key: string]: shader.ShaderProgram} = {}
 
@@ -16,8 +18,6 @@ export function fromModel(model: Model): shader.ShaderProgram {
 	return fromSource(model.gl, sources.vertex, sources.fragment)
 }
 
-type sourceReturnT = {vertex: primitives.VertexSource, fragment: primitives.FragmentSource}
-
 export function getSource(model: Model): sourceReturnT {
 
 	let attributes: shader.ShaderAttributeKinds[] = ['position']
@@ -27,6 +27,8 @@ export function getSource(model: Model): sourceReturnT {
 
 	const nPointLights = constants.N_POINT_LIGHTS
 	const nDirLights = constants.N_DIRECTIONAL_LIGHTS
+	const nJoints = constants.N_JOINTS
+	const nJointInfluencers = constants.N_JOINT_INFLUENCES_PER_VERTEX
 
 	let vertBody: Array<primitives.makeFuncT> = []
 	let vertMain: Array<primitives.makeFuncT> = []
@@ -37,18 +39,42 @@ export function getSource(model: Model): sourceReturnT {
 	//	vertex
 	//
 
-	if (model.receivesLight) {
-		vertMain.push(vertex.components.main.passWorldPosition)
-		vertMain.push(vertex.components.main.passNormal)
+	vertMain.push(vertex.components.main.makePosition)
+
+	const hasAnimation = model.hasAnimation()
+
+	if (hasAnimation) {
+		attributes.push('joint_weight')
+		attributes.push('joint_index')
+
+		vertexUniforms.push(vertex.library.jointTransforms(nJoints))
+
+		vertBody.push(vertex.components.body.inverse)
+		vertBody.push(vertex.components.body.transpose)
+		vertBody.push(vertex.components.body.normalMat)
+	}
+
+	if (model.receivesLight || hasAnimation) {
 		attributes.push('normal')
+		vertMain.push(vertex.components.main.makeNormal)
+	}
+
+	if (model.receivesLight) {
 		varying.push('normal')
-		varying.push('position')
+		varying.push('position')		
+
+		if (hasAnimation)
+			vertMain.push(() => vertex.components.main.makeSkeletalAnimationLoop(nJointInfluencers))
+
+		vertMain.push(vertex.components.main.passWorldNormal)
+		vertMain.push(vertex.components.main.passWorldPosition)
 	}
 
 	if (model.material.hasTexture()) {
-		vertMain.push(vertex.components.main.passUV)
 		attributes.push('uv')
 		varying.push('uv')
+
+		vertMain.push(vertex.components.main.passUV)
 	}
 
 	vertMain.push(vertex.components.main.assignPosition)
@@ -113,7 +139,7 @@ export function getSource(model: Model): sourceReturnT {
 		uniforms: vertexUniforms,
 		userUniforms: [],
 		attributeMapFunc: primitives.defaultAttributeMapFunc,
-		body: [],
+		body: vertBody,
 		main: vertMain
 	}
 
@@ -133,7 +159,9 @@ export function getSource(model: Model): sourceReturnT {
 
 }
 
-export function fromSource(gl: WebGLRenderingContext, vert: primitives.VertexSource, frag: primitives.FragmentSource): shader.ShaderProgram {
+export function fromSource(gl: WebGLRenderingContext, 
+	vert: primitives.VertexSource, 
+	frag: primitives.FragmentSource): shader.ShaderProgram {
 
 	const vertShaderSource: shader.ShaderSource = {
 		source: vertex.make(vert),

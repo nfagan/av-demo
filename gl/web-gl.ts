@@ -24,8 +24,10 @@ import * as capabilities from './common/capabilities'
 import * as texture from './texture/texture-index'
 import * as fbo from './fbo/fbo'
 import * as terrain from './terrain/terrain-index'
+import * as animation from './animation/animation-index'
 
 export {
+	animation,
 	capabilities,
 	Camera,
 	Canvas,

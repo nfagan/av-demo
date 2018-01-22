@@ -1,58 +1,5 @@
 import * as wgl from '../gl/web-gl'
-import { mat4 } from 'gl-matrix'
-
-function getJointVertexShaderSource(N: number): wgl.ShaderBuilder.primitives.VertexSource {
-
-	const mainSrc = () => {
-		return `
-
-		vec3 joint_weights_ = in_joint_weight;
-		vec3 joint_indices_ = in_joint_index;
-
-		vec4 local_position = vec4(0.0);
-		vec4 local_normal = vec4(0.0);
-
-		for (int i = 0; i < 3; i++) {
-			int index = int(joint_indices_[i]);
-			float weight = joint_weights_[i];
-
-			if (weight == 0.0)
-				break;
-
-			mat4 trans = joint_transforms[index];
-			vec4 pose = trans * vec4(in_position, 1.0);
-
-			local_position += pose * weight;
-		}
-
-		gl_Position = projection * view * model * vec4(local_position.xyz, 1.0);
-		`
-	}
-
-	return {
-		attributes: ['position', 'normal', 'uv', 'joint_index', 'joint_weight'],
-		varyings: [],
-		uniforms: wgl.ShaderBuilder.vertex.library.MVPMat4,
-		userUniforms: [{name: 'joint_transforms', kind: 'mat4', isArray: true, length: N}],
-		body: () => '',
-		main: [mainSrc]
-	}
-}
-
-function getJointFragmentShaderSource(): wgl.ShaderBuilder.primitives.FragmentSource {
-	return {
-		uniforms: [],
-		userUniforms: [],
-		varyings: [],
-		precision: 'mediump',
-		main: () => {
-			return `
-				gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-			`
-		},
-		body: () => '',
-	}
-}
+import { mat4, quat, vec3 } from 'gl-matrix'
 
 export async function main() {
 
@@ -74,7 +21,16 @@ export async function main() {
 	const camera = new wgl.Camera()
 	const keyboardMoveControls = new wgl.Controls.Movement.Keyboard(keyboard, camera, 5.0)
 	const mouseInput = new wgl.Input.PointerLock(canvas.element)
-	const rotationControls = new wgl.Controls.Orbit.Orbit2(mouseInput, camera)
+	const touchInput = new wgl.Input.Touch()
+	const touchMoveControls = new wgl.Controls.Movement.Touch(touchInput, camera, 30.0)
+
+	let rotationControls: any
+	
+	if (wgl.capabilities.hasPointerLock()) {
+		rotationControls = new wgl.Controls.Orbit.Orbit2(mouseInput, camera)
+	} else {
+		rotationControls = new wgl.Controls.Orbit.Orbit(touchInput, camera)
+	}
 
 	const sphere = wgl.MeshFactory.create(gl, 'sphere')
 	const mat = wgl.Material.Physical(gl)
@@ -85,8 +41,7 @@ export async function main() {
 	renderer.setAspect(canvas.aspect)
 	renderer.setNearFar(0.1, 1000)
 	
-	// scene.add([sphereModel, light, lightModel])
-	scene.add(sphereModel)
+	scene.add([sphereModel, light, lightModel])
 
 	const lightPosition = [5, 5, 5]
 	const sphereColor = [0.25, 1, 0.25]
@@ -99,53 +54,158 @@ export async function main() {
 	lightModel.setPosition(lightPosition)
 	lightModel.receivesLight = false
 
-    camera.setPosition([0, 0, 5])
-    
+	camera.setPosition([0, 5, 20])
+
+	//
+	//	sky dome
+	//
+
+	const farPlane = 1000
+	
+	const sky = new wgl.Model(gl, sphere, mat.clone())
+	const skyTex = await wgl.Loaders.TEX.load2D(gl, '/tex/skys:sky3.png')
+
+	const sun = wgl.Light.Directional(gl)
+	const sunHelper = new wgl.Model(gl, sphere, mat.clone())
+	const sunDir = [-10, -50, -10]
+	sun.getAttribute('direction').setValue(sunDir)
+	sunHelper.position = vec3.negate(sunHelper.position, sunDir)
+	sunHelper.receivesLight = false
+	sunHelper.material.getAttribute('albedo').setValue(sun.getColor())
+
+	scene.add([sun, sunHelper])
+
+	sky.receivesLight = false
+	
+	sky.material.getAttribute('albedo').setValue(skyTex)
+	sky.setPosition([0, 0, 0])
+	sky.setScale(farPlane - 10)
+
+	let origPosition = vec3.create()
+
+	sky.onBeforeRender = () => {
+		let pos = camera.position
+		origPosition = vec3.copy(origPosition, pos)
+		camera.setPosition([0, 0, 0])
+		renderer.configureCamera(sky.program, camera)
+	}
+
+	sky.onAfterRender = () => {
+		camera.setPosition(origPosition)
+		renderer.configureCamera(sky.program, camera)
+	}
+
+	scene.add(sky)
+
+	renderer.setNearFar(0.1, farPlane)
+	
     //
     //  anim stuff
     //
 
-	let cubeSrc = await wgl.Loaders.text.load('/obj/test:test-anim-run2.dae')
-	// let cubeSrc = await wgl.Loaders.text.load('/obj/test:test-anim-2.dae')
-    let colladaSource = wgl.parsers.collada(gl, cubeSrc)
+	const scene0 = await wgl.Loaders.text.load('/obj/test:room2.dae')
+	const scene1 = await wgl.Loaders.text.load('/obj/test:test-anim-2-smooth.dae')
+	// let cubeSrc = await wgl.Loaders.text.load('/obj/test:test-anim-2-smooth.dae')
+	let colladaSource0 = wgl.parsers.collada(gl, scene0)
+	let colladaSource1 = wgl.parsers.collada(gl, scene1)
 
-	const cubeModel = new wgl.Model(gl, colladaSource.mesh, sphereModel.material.clone())
-	const skeleton = colladaSource.skeleton
-	const animation = colladaSource.animation
+	// const tex0 = await wgl.Loaders.TEX.load2D(gl, '/tex/neb.png')
+	const tex0 = 0.25
 
-	// const shaderSources = wgl.ShaderBuilder.getSource(cubeModel)
-	// shaderSources.vertex = getJointVertexShaderSource()
+	const colladaSource = colladaSource0.concat(colladaSource1)
+	// const colladaSource = colladaSource1
 
-	const nJoints = skeleton.size()
-	const vertShaderSource = getJointVertexShaderSource(nJoints)
-	const fragShaderSource = getJointFragmentShaderSource()
-	const customProg = wgl.ShaderBuilder.fromSource(gl, vertShaderSource, fragShaderSource)
+	let animatedModel: wgl.Model
+	const animations: Array<wgl.animation.SkeletalAnimation> = []
 
-	// debugger
+	const anchor = new wgl.Model(gl, null, null)
+	anchor.setRotation([-90, 180, 0])
 
-	cubeModel.program = customProg
+	for (const modelSource of colladaSource) {
+		const model = new wgl.Model(gl, modelSource.mesh, sphereModel.material.clone())
 
-	// console.log(customProg.shaders[0].source)
+		const components = wgl.util.matrix.decompose(modelSource.transform)
 
-    cubeModel.setPosition([-5, -5, -5])
-    cubeModel.setScale(1)
+		if (components.success) {
+			model.position = components.translation
+			model.orientation = components.quaternion
+			model.scale = components.scale
+		} else {
+			console.warn('Failed to parse.')
+		}
 
-	scene.add(cubeModel)
+		// model.setRotation([-90, 0, 0])
 
-	
-	cubeModel.onBeforeRender = () => {
-		animation.update()
-		renderer.conditionalBindProgram(cubeModel.program)
-		skeleton.traverse(joint => {
-			const animTrans = joint.getAnimationTransform()
-			cubeModel.program.setUniform(`joint_transforms[${joint.index}]`, animTrans)
-		})
-		renderer.conditionalBindProgram(null)
+		scene.add(model)
+
+		if (!modelSource.animation) {
+			anchor.addChild(model)
+			continue
+		}
+
+		model.setRotation([-90, 180, 0])
+
+		model.animation = modelSource.animation
+
+		keyboard.down(evt => modelSource.animation.togglePlay(), wgl.Input.Keys.space)
+
+		animatedModel = model
+
+		animations.push(model.animation)
+
+		// model.setPosition([-5, -5, -5])
+		// model.setScale(1)
 	}
+
+	// animatedModel.material.getAttribute('albedo').setValue(tex0)
+	// animatedModel.material.getAttribute('roughness').setValue(tex0)
+	// animatedModel.material.getAttribute('metallic').setValue(tex0)
+
+	anchor.setScale(5)
+
+	const timelines: Array<wgl.animation.Timeline> = []
+
+	const timeline = new wgl.animation.Timeline()
+		.duration(2)
+		.loop()
+		.fromTo(0, 1, 1/3, wgl.animation.easings.easeInCubic)
+		.to(1, 1/3, wgl.animation.easings.one)
+		.to(0, 1/3, wgl.animation.easings.easeOutQuad)
+		.onUpdate(tl => {
+			const att = animatedModel.material.getAttribute('albedo')
+			att.setValue([tl.value(), tl.value(), 0])
+		})
+	
+	keyboard.down(evt => timeline.trigger(), wgl.Input.Keys.shift)
+	keyboard.down(evt => timeline.togglePlay(), wgl.Input.Keys.space)
+
+	timelines.push(timeline)
 
 	const animate = () => {
 		keyboardMoveControls.update()
+		touchMoveControls.update()
 		rotationControls.update()
+
+		animations.map(anim => anim.update())
+		timelines.map(tl => tl.update())
+
+		if (animatedModel) {
+			// if (keyboard.isDown(wgl.Input.Keys.Up)) anchor.orientation[0] += 0.02
+			// if (keyboard.isDown(wgl.Input.Keys.Down)) anchor.orientation[0] -= 0.02
+			// if (keyboard.isDown(wgl.Input.Keys.Left)) anchor.orientation[1] -= 0.02
+			// if (keyboard.isDown(wgl.Input.Keys.Right)) anchor.orientation[1] += 0.02
+			// quat.normalize(anchor.orientation, anchor.orientation)
+
+			if (keyboard.isDown(wgl.Input.Keys.Up)) animatedModel.position[2] -= 0.15
+			if (keyboard.isDown(wgl.Input.Keys.Down)) animatedModel.position[2] += 0.15
+			if (keyboard.isDown(wgl.Input.Keys.Left)) animatedModel.position[0] -= 0.15
+			if (keyboard.isDown(wgl.Input.Keys.Right)) animatedModel.position[0] += 0.15
+		}
+
+		// camera.lookAt(animatedModel.position)
+		// camera.position[0] = cubeModel.position[0]
+		// camera.position[1] = cubeModel.position[1] + 5
+		// camera.position[2] = cubeModel.position[2] + 10
 
 		renderer.render(scene, camera)
 		window.requestAnimationFrame(animate)

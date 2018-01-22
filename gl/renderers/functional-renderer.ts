@@ -12,6 +12,7 @@ import { FBO } from '../fbo/fbo'
 import { types } from '../util/util'
 import { Scene } from '../scene/scene'
 import { fromModel } from '../shader-builder/shader-builder-index'
+import { Skeleton } from '../animation/skeleton'
 
 export default class extends base {
 
@@ -67,7 +68,7 @@ export default class extends base {
 		if (!model.visible)
 			return
 
-		model.onBeforeRender()
+		model.onBeforeRender(model)
 
 		this.clearTextureIds()
 
@@ -86,9 +87,13 @@ export default class extends base {
 		this.configureTransform(prog, model.getWorldMatrix())
 		this.configureMaterial(prog, material, forceUpdate)
 
+		if (model.hasAnimation()) {
+			this.configureSkeleton(prog, model.animation.skeleton)
+		}
+
 		this.draw(prog, mesh, forceUpdate)
 
-		model.onAfterRender()
+		model.onAfterRender(model)
 	}
 
 	public draw(prog: Shader.ShaderProgram, mesh: Mesh, force: boolean = false): void {
@@ -130,6 +135,16 @@ export default class extends base {
 		tex.index = index
 		gl.activeTexture(gl.TEXTURE0 + index)
 		tex.bind()
+	}
+
+	public configureSkeleton(prog: Shader.ShaderProgram, skeleton: Skeleton): void {
+		this.conditionalBindProgram(prog)
+		skeleton.traverse(joint => {
+			const animTrans = joint.getAnimationTransform()
+			const index = joint.index
+			const unName = uniforms.requireUniformName('joint_transforms')
+			prog.setUniform(`${unName}[${index}]`, animTrans)
+		})
 	}
 
 	public configureLight(prog: Shader.ShaderProgram, light: Light.Light, force: boolean = false): void {

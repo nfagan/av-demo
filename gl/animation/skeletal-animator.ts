@@ -2,6 +2,7 @@ import { mat4 } from 'gl-matrix'
 import * as arr from '../util/array-util'
 import { assert, matrix, time } from '../util/util';
 import { JointTransform, Skeleton } from './skeleton'
+import * as math from '../math/wgl-math'
 
 export class KeyFrames {
 
@@ -79,7 +80,11 @@ export class SkeletalAnimation {
     private currentTime: number
     public duration: number
 
+    public speed: number
+
     private tmpTransform: mat4
+
+    public isPlaying: boolean
 
     constructor(skeleton: Skeleton, duration: number) {
         this.sources = {}
@@ -91,6 +96,10 @@ export class SkeletalAnimation {
         this.duration = duration
 
         this.tmpTransform = mat4.create()
+
+        this.isPlaying = true
+
+        this.speed = 1
     }
 
     public addSource(name: string, source: KeyFrames): void {
@@ -104,12 +113,30 @@ export class SkeletalAnimation {
         return frames
     }
 
+    public play(): void {
+        this.isPlaying = true
+    }
+
+    public pause(): void {
+        this.isPlaying = false
+    }
+
+    public togglePlay(): void {
+        if (this.isPlaying) 
+            this.pause()
+        else
+            this.play()
+    }
+
     public update(): void {
         this.updateTime()
 
         const self = this
         const skeleton = this.skeleton
         const timer = this.timer
+
+        if (!this.isPlaying)
+            return
 
         skeleton.traverse(joint => {
             const frames = self.getSource(joint.name)
@@ -130,7 +157,7 @@ export class SkeletalAnimation {
                 fracT = (currentTime - beforeT) / (afterT - beforeT)
             }
 
-            const interp = matrix.lerp(before.components, after.components, fracT)
+            const interp = matrix.slerp(before.components, after.components, fracT)
             const animTrans = matrix.recompose(self.tmpTransform, interp)
             
 			joint.setLocalTransform(animTrans)
@@ -141,7 +168,9 @@ export class SkeletalAnimation {
 
     private updateTime(): void {
         this.timer.update()
-        const currentTime = this.timer.delta() + this.currentTime
+        if (!this.isPlaying)
+            return
+        const currentTime = this.timer.delta() * this.speed + this.currentTime
         this.currentTime = currentTime > this.duration ? 0 : currentTime
     }
 }

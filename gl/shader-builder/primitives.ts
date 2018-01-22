@@ -91,6 +91,10 @@ export function makeAttribute(name: ShaderAttributeKinds, kind: types.glsl): str
 	return `attribute ${kindStr} ${attr};`
 }
 
+export function makeCopyAssignment(source: string, dest: string, kind: types.glsl): string {
+	return `${kind} ${dest} = ${source};`
+}
+
 export function makeVarying(name: ShaderAttributeKinds, kind: types.glsl): string {
 	let varying = getVaryingName(name)
 	let kindStr = GLSLTypeMap.getType(kind)
@@ -124,6 +128,10 @@ export function makeMainNameFromBuiltinUniform(name: uniforms.UniformNames): str
 export function makeMainNameFromUniform(name: uniforms.UniformNameOrString): string {
 	let name_ = getUniformName(name)
 	return `${name_}_`
+}
+
+export function makeMainName(name: string): string {
+	return `${name}_`
 }
 
 function _makeTextureOrTUniformToT(name: uniforms.UniformNameOrString, assignedType: types.glsl, isTexture: boolean, components: string): string {
