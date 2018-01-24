@@ -141,7 +141,8 @@ export class Texture extends Resource {
 		//
 		//	@TODO: Fix cloning
 		//
-		throw new Error('Cloning not yet implemented')
+		console.warn('Texture: cloning not yet properly implemented.')
+		return new Texture(this.gl, this.data, this.opts)
 	}
 
 	public bind(): void {

@@ -19,7 +19,7 @@ export async function main() {
 	const scene = new wgl.Scene(gl)
 	const renderer = new wgl.renderers.functional(gl)
 	const camera = new wgl.Camera()
-	const keyboardMoveControls = new wgl.Controls.Movement.Keyboard(keyboard, camera, 5.0)
+	const keyboardMoveControls = new wgl.Controls.Movement.Keyboard(keyboard, camera, 10.0)
 	const mouseInput = new wgl.Input.PointerLock(canvas.element)
 	const touchInput = new wgl.Input.Touch()
 	const touchMoveControls = new wgl.Controls.Movement.Touch(touchInput, camera, 30.0)
@@ -31,6 +31,9 @@ export async function main() {
 	} else {
 		rotationControls = new wgl.Controls.Orbit.Orbit(touchInput, camera)
 	}
+
+	const tex0 = await wgl.Loaders.TEX.load2D(gl, '/tex/neb.png')
+	const skyTex = await wgl.Loaders.TEX.load2D(gl, '/tex/skys:sky3.png')
 
 	const sphere = wgl.MeshFactory.create(gl, 'sphere')
 	const mat = wgl.Material.Physical(gl)
@@ -44,13 +47,18 @@ export async function main() {
 	scene.add([sphereModel, light, lightModel])
 
 	const lightPosition = [5, 5, 5]
-	const sphereColor = [0.25, 1, 0.25]
+	const lightColor = [1, 0, 1]
+	const sphereColor = [1, 1, 1]
 	const spherePosition = [0, 0, 0]
 
 	light.getAttribute('position').setValue(lightPosition)
-	sphereModel.setPosition(spherePosition)
-	sphereModel.material.getAttribute('albedo').setValue(sphereColor)
+	light.getAttribute('color').setValue(lightColor)
 
+	sphereModel.setPosition(spherePosition)
+	sphereModel.material.getAttribute('albedo').setValue(skyTex)
+	sphereModel.material.getAttribute('metallic').setValue(tex0.clone())
+
+	lightModel.material.getAttribute('albedo').setValue(lightColor)
 	lightModel.setPosition(lightPosition)
 	lightModel.receivesLight = false
 
@@ -63,12 +71,13 @@ export async function main() {
 	const farPlane = 1000
 	
 	const sky = new wgl.Model(gl, sphere, mat.clone())
-	const skyTex = await wgl.Loaders.TEX.load2D(gl, '/tex/skys:sky3.png')
 
 	const sun = wgl.Light.Directional(gl)
 	const sunHelper = new wgl.Model(gl, sphere, mat.clone())
 	const sunDir = [-10, -50, -10]
+	const sunColor = [1, 1, 1]
 	sun.getAttribute('direction').setValue(sunDir)
+	sun.getAttribute('color').setValue(sunColor)
 	sunHelper.position = vec3.negate(sunHelper.position, sunDir)
 	sunHelper.receivesLight = false
 	sunHelper.material.getAttribute('albedo').setValue(sun.getColor())
@@ -103,14 +112,11 @@ export async function main() {
     //  anim stuff
     //
 
-	const scene0 = await wgl.Loaders.text.load('/obj/test:room2.dae')
+	const scene0 = await wgl.Loaders.text.load('/obj/test:room3.dae')
 	const scene1 = await wgl.Loaders.text.load('/obj/test:test-anim-2-smooth.dae')
 	// let cubeSrc = await wgl.Loaders.text.load('/obj/test:test-anim-2-smooth.dae')
 	let colladaSource0 = wgl.parsers.collada(gl, scene0)
 	let colladaSource1 = wgl.parsers.collada(gl, scene1)
-
-	// const tex0 = await wgl.Loaders.TEX.load2D(gl, '/tex/neb.png')
-	const tex0 = 0.25
 
 	const colladaSource = colladaSource0.concat(colladaSource1)
 	// const colladaSource = colladaSource1
@@ -161,7 +167,7 @@ export async function main() {
 	// animatedModel.material.getAttribute('roughness').setValue(tex0)
 	// animatedModel.material.getAttribute('metallic').setValue(tex0)
 
-	anchor.setScale(5)
+	anchor.setScale(7)
 
 	const timelines: Array<wgl.animation.Timeline> = []
 
