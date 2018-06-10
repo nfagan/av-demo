@@ -1,36 +1,28 @@
 import * as wgl from '../gl/web-gl'
 import { mat4, quat, vec3 } from 'gl-matrix'
+import * as demo from './demo-util'
 
-export async function main() {
+export async function main(glInit: demo.initReturnT): Promise<{animationFrameId: number}> {
 
-	document.body.style.padding = '0'
-	document.body.style.margin = '0'
-	document.body.style.position = 'fixed'
-
-	const keyboard = new wgl.Input.Keyboard()
-	const canvas = new wgl.Canvas()
+	const gl = glInit.gl
+	const scene = glInit.scene
+	const canvas = glInit.canvas
+	const keyboard = glInit.keyboard
 	const canvasElement = canvas.element
+	const renderer = glInit.renderer
+	const camera = glInit.camera
+	const stats = glInit.stats
+	const touchInput = glInit.touchInput
+	const mouseInput = glInit.mouseInput
+	const keyboardMoveControls = glInit.keyboardMoveControls
+	const touchMoveControls = glInit.touchMoveControls
+	const rotationControls = glInit.rotationControls
 
-	const gl: WebGLRenderingContext = canvasElement.getContext('webgl')
+	renderer.reset()
+	scene.clear()
 
-	if (!gl) 
-		throw new Error('Unable to initialize GL context.')
-
-	const scene = new wgl.Scene(gl)
-	const renderer = new wgl.renderers.functional(gl)
-	const camera = new wgl.Camera()
-	const keyboardMoveControls = new wgl.Controls.Movement.Keyboard(keyboard, camera, 10.0)
-	const mouseInput = new wgl.Input.PointerLock(canvas.element)
-	const touchInput = new wgl.Input.Touch()
-	const touchMoveControls = new wgl.Controls.Movement.Touch(touchInput, camera, 30.0)
-
-	let rotationControls: any
-	
-	if (wgl.capabilities.hasPointerLock()) {
-		rotationControls = new wgl.Controls.Orbit.Orbit2(mouseInput, camera)
-	} else {
-		rotationControls = new wgl.Controls.Orbit.Orbit(touchInput, camera)
-	}
+	touchMoveControls.setSpeed(30.0)
+	keyboardMoveControls.setSpeed(10.0)
 
 	const tex0 = await wgl.Loaders.TEX.load2D(gl, '/tex/neb.png')
 	const skyTex = await wgl.Loaders.TEX.load2D(gl, '/tex/skys:sky3.png')
@@ -187,6 +179,10 @@ export async function main() {
 
 	timelines.push(timeline)
 
+	const animId = {
+		animationFrameId: 0
+	}
+
 	const animate = () => {
 		keyboardMoveControls.update()
 		touchMoveControls.update()
@@ -214,8 +210,12 @@ export async function main() {
 		// camera.position[2] = cubeModel.position[2] + 10
 
 		renderer.render(scene, camera)
-		window.requestAnimationFrame(animate)
+		animId.animationFrameId = window.requestAnimationFrame(animate)
 	}
 
 	animate()
+
+	return new Promise<{animationFrameId: number}>((resolve, reject) => {
+		resolve(animId)
+	})
 }

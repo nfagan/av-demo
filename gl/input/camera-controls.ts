@@ -351,6 +351,10 @@ export namespace Movement {
 			this.camera = camera
 			this.speed = speed
 		}
+
+		public setSpeed(speed: number): void {
+			this.speed = speed
+		}
 	}
 
 	export class Keyboard extends movement<_Keyboard.Keyboard> {
@@ -362,7 +366,7 @@ export namespace Movement {
 			right: _Keyboard.Keys.D
 		}
 
-		constructor(kb: _Keyboard.Keyboard, camera: Camera, speed: number) {
+		constructor(kb: _Keyboard.Keyboard, camera: Camera, speed: number = 1.0) {
 			super(kb, camera, speed)
 		}
 
@@ -392,7 +396,7 @@ export namespace Movement {
 		dist: number
 		began: boolean
 
-		constructor(touch: XY.Touch, camera: Camera, speed: number) {
+		constructor(touch: XY.Touch, camera: Camera, speed: number = 1.0) {
 			super(touch, camera, speed)
 
 			this.dist = 0

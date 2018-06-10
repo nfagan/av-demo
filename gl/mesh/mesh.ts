@@ -37,6 +37,18 @@ class Mesh extends Resource {
 		this.indices = indices
 	}
 
+	public hasIndices(): boolean {
+		return this.indices.length > 0
+	}
+
+	public getVertices(): Array<Vertex> {
+		return this.vertices
+	}
+
+	public getIndices(): Uint16Array {
+		return this.indices
+	}
+
 	public setTopology(topology: number): void {
 		this.assertNotFinalized('setTopology')
 		this.topology = topology

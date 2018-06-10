@@ -25,6 +25,7 @@ import * as texture from './texture/texture-index'
 import * as fbo from './fbo/fbo'
 import * as terrain from './terrain/terrain-index'
 import * as animation from './animation/animation-index'
+import * as physics from './physics/physics-index'
 
 export {
 	animation,
@@ -59,5 +60,6 @@ export {
 	ShaderFactory,
 	terrain,
 	texture,
+	physics,
 	util
 }

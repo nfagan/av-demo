@@ -119,6 +119,7 @@ export class Texture extends Resource {
 		if (opts.type === gl.TEXTURE_2D) {
 			this.configure2D(tex)
 		} else {
+			this.dispose()
 			throw new Error(`Unrecognized texture type.`)
 		}
 
@@ -160,8 +161,7 @@ export class Texture extends Resource {
 	public dispose(): void {
 		const gl = this.gl
 		if (!this.exists()) {
-			console.warn('Attempted to dispose of a texture before creating it.')
-			return
+			console.warn('Texture: attempted to dispose of a texture before creating it.')
 		}
 		gl.deleteTexture(this.handle)
 		this._exists = false

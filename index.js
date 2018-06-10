@@ -12,6 +12,10 @@ const sendFileOr404 = (res, filename) => {
 	})
 }
 
+app.get('/demos', (req, res) => {
+	res.sendFile('demos.html', {root: __dirname})
+})
+
 app.get('/', (req, res) => {
 	res.sendFile('index.html', {root: __dirname})
 })

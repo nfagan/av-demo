@@ -52,6 +52,10 @@ class Vertex {
 		return this.attributes[name] !== undefined
 	}
 
+	public getAttribute(name: string): Float32Array {
+		return this.attributes[name]
+	}
+
 	public sizeof(name: string): number {
 		let attr = this.attributes[name]
 		return attr === undefined ? 0 : attr.length

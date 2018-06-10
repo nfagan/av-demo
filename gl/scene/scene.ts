@@ -8,14 +8,21 @@ class Scene {
 
 	private gl: WebGLRenderingContext
 
-	public models: Array<Model> = []
-	public lights: Array<Light.Light> = []
-	public modelsSorted: boolean = false
+	public models: Array<Model>
+	public lights: Array<Light.Light>
+	public modelsSorted: boolean
 	public background: Model
 
 	constructor(gl: WebGLRenderingContext) {
 		this.gl = gl
+		this.clear()
+	}
+
+	public clear(): void {
+		this.models = []
+		this.lights = []
 		this.background = null
+		this.modelsSorted = false
 	}
 
 	public sortModels(comparator: (a: Model, b: Model) => number) {

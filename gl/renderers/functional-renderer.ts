@@ -23,6 +23,7 @@ export default class extends base {
 
 	private lightIds: {[key: string]: {[key: string]: Array<string>}} = {}
 	private textureIds: {[key: string]: Array<string>} = {}
+	private _isNewFrame: {[key:string]: boolean} = {}
 
 	constructor(gl: WebGLRenderingContext) {
 		super(gl)
@@ -47,6 +48,7 @@ export default class extends base {
 		scene.models.map(model => self.requireProgram(model))
 
 		this.clearLightIds()
+		this.clearIsNewFrame()
 
 		for (let model of scene.models) {
 			this.drawModel(scene, camera, model)
@@ -78,7 +80,9 @@ export default class extends base {
 
 		let forceUpdate = false
 
-		if (this.conditionalBindProgram(prog)) {
+		const isNewFrame = this.isNewFrame(prog)
+
+		if (this.conditionalBindProgram(prog) || isNewFrame) {
 			forceUpdate = true
 			this.configureCamera(prog, camera)
 			this.configureLights(prog, scene.lights, forceUpdate)
@@ -92,6 +96,8 @@ export default class extends base {
 		}
 
 		this.draw(prog, mesh, forceUpdate)
+
+		this._isNewFrame[prog.uuid] = false
 
 		model.onAfterRender(model)
 	}
@@ -184,6 +190,18 @@ export default class extends base {
 
 	private clearTextureIds(): void {
 		this.textureIds = {}
+	}
+
+	private clearIsNewFrame(): void {
+		const props = Object.keys(this._isNewFrame)
+		for (let i = 0; i < props.length; i++) {
+			delete this._isNewFrame[props[i]]
+		}
+	}
+
+	public isNewFrame(prog: Shader.ShaderProgram): boolean {
+		const res = this._isNewFrame[prog.uuid]
+		return res === undefined ? true : res
 	}
 
 	private getLightIndex(prog: Shader.ShaderProgram, light: Light.Light): number {

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>eg</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            position: fixed;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .element {
+            padding: 0.5rem;
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+    </div>
+    <script>
+
+        var links = [
+            {href: 'anim', name: 'animation'},
+            {href: 'height', name: 'height map'},
+            {href: 'volume', name: 'volume'},
+            {href: 'barebones', name: 'barebones'},
+            {href: 'controls', name: 'controls'},
+        ]
+
+        var cont = document.getElementsByClassName('container')[0]
+
+        links.map(function(link) {
+            const el = document.createElement('div')
+            el.className = 'element'
+            const linkEl = document.createElement('a')
+            linkEl.setAttribute('href', `/#${link.href}`)
+            linkEl.innerHTML = link.name
+            el.appendChild(linkEl)
+            cont.appendChild(el)
+        })
+
+    </script>
+</body>
+</html>

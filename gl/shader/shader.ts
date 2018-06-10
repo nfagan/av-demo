@@ -44,20 +44,23 @@ class Shader extends Resource {
 		return this.shader
 	}
 
+	public dispose(): void {
+		this.gl.deleteShader(this.shader)
+		this.shader = null
+		this.isValid = false
+	}
+
 	private setup(): void {
 		const gl = this.gl
-		let shader: WebGLShader = gl.createShader(this.type)
-		gl.shaderSource(shader, this.source)
-		gl.compileShader(shader)
-		if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+		this.shader = gl.createShader(this.type)
+		gl.shaderSource(this.shader, this.source)
+		gl.compileShader(this.shader)
+		if (!gl.getShaderParameter(this.shader, gl.COMPILE_STATUS)) {
 			let message: string = 'Shader compilation error: ' + 
-				gl.getShaderInfoLog(shader)
+				gl.getShaderInfoLog(this.shader)
 			console.error(message)
-			gl.deleteShader(shader)
-			shader = null
-			this.isValid = false
-	  	}
-	  	this.shader = shader
+			this.dispose()
+		}
 	}
 
 	private static getShaderType(gl: WebGLRenderingContext, type: ShaderTypes): number {
@@ -112,6 +115,15 @@ class ShaderProgram extends Resource {
 		this.assertFinalized('unbind')
 		this.gl.useProgram(null)
 		this._isBound = false
+	}
+
+	public dispose(): void {
+		this.gl.deleteProgram(this.program)
+		this.program = null
+		this.isValid = false
+		this.isFinalized = false
+
+		this.shaders.map(shader => shader.dispose)
 	}
 
 	public hasUniform(name: string): boolean {

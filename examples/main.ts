@@ -3,13 +3,30 @@ import * as barebones from './barebones'
 import * as volume from './volumetric-test'
 import * as height from './heightmap-test'
 import * as anim from './anim-test'
+import * as phys from './phys-test'
+import { init } from './demo-util'
 
-// controlsTest.main()
+const hash = window.location.hash
 
-// barebones.main()
+if (hash === '#anim') {
+    const glInit = init()
+    anim.main(glInit)
 
-// volume.main()
+} else if (hash === '#height') {
+    const glInit = init()
+    height.main(glInit)
 
-// height.main()
+} else if (hash === '#volume') {
+    volume.main()
 
-anim.main()
+} else if (hash === '#controls') {
+    controlsTest.main()
+
+} else if (hash === '#barebones') {
+    barebones.main()
+
+} else {
+    console.warn(`Unrecognized demo "${hash}".`)
+    const glInit = init()
+    height.main(glInit)
+}

@@ -1,13 +1,15 @@
 import * as wgl from '../gl/web-gl'
 import * as waud from '../aud/web-audio'
 import { mat4, quat, vec2, vec3, glMatrix } from 'gl-matrix'
+import * as demo from './demo-util'
 
-export async function main() {
+export async function main(glInit: demo.initReturnT) {
 
 	const audioManager = new waud.AudioContextManager()
 	const nLevels = 32
 	const analyser = new waud.AudioAnalyser(audioManager.getContext(), {levelsCount: nLevels})
 	const files = ['/sounds/sep30.aac']
+	const SOUND_AFFECTS_LIGHT = true
 
 	analyser.setup()
 
@@ -16,41 +18,31 @@ export async function main() {
 	const destination = analyser.getAnalyserNode()
 
 	const togglePlay = () => audioManager.togglePlay(files[0], destination)
+	// const togglePlay = () => 0
 
-	document.body.style.padding = '0'
-	document.body.style.margin = '0'
-	document.body.style.position = 'fixed'
-
-	const keyboard = new wgl.Input.Keyboard()
-	const canvas = new wgl.Canvas()
+	const gl = glInit.gl
+	const scene = glInit.scene
+	const canvas = glInit.canvas
+	const keyboard = glInit.keyboard
 	const canvasElement = canvas.element
+	const renderer = glInit.renderer
+	const camera = glInit.camera
+	const stats = glInit.stats
+	const touchInput = glInit.touchInput
+	const mouseInput = glInit.mouseInput
+	const keyboardMoveControls = glInit.keyboardMoveControls
+	const touchMoveControls = glInit.touchMoveControls
+	const rotationControls = glInit.rotationControls
 
-	const gl: WebGLRenderingContext = canvasElement.getContext('webgl')
+	renderer.reset()
+	scene.clear()
 
-	if (!gl) 
-		throw new Error('Unable to initialize GL context.')
+	touchMoveControls.setSpeed(30.0)
+	keyboardMoveControls.setSpeed(10.0)
 
 	canvasElement.onclick = () => togglePlay()
 
 	keyboard.down(togglePlay, wgl.Input.Keys.space)
-
-	const scene = new wgl.Scene(gl)
-	const renderer = new wgl.renderers.functional(gl)
-	const camera = new wgl.Camera()
-	const stats = new wgl.FrameStats()
-
-	const mouseInput = new wgl.Input.PointerLock(canvas.element)
-	const touchInput = new wgl.Input.Touch()
-	const keyboardMoveControls = new wgl.Controls.Movement.Keyboard(keyboard, camera, 10.0)
-	const touchMoveControls = new wgl.Controls.Movement.Touch(touchInput, camera, 30.0)
-
-	let rotationControls: any
-	
-	if (wgl.capabilities.hasPointerLock()) {
-		rotationControls = new wgl.Controls.Orbit.Orbit2(mouseInput, camera)
-	} else {
-		rotationControls = new wgl.Controls.Orbit.Orbit(touchInput, camera)
-	}
 
 	const skyTex = await wgl.Loaders.TEX.load2D(gl, '/tex/skys:sky3.png')
 	const nebTex = await wgl.Loaders.TEX.load2D(gl, '/tex/neb.png')
@@ -174,16 +166,24 @@ export async function main() {
 		touchMoveControls.update()
 		rotationControls.update()
 
-		camera.position[1] = 10
+		// camera.position[1] = 10
 		// camera.lookAt(sphere3.getPosition())
 
 		analyser.update()
 
-		// let levels = analyser.getLevels()
+		const mvamt = 0.1
+		if (keyboard.isDown(wgl.Input.Keys.Up)) sphere3.position[2] -= mvamt
+		if (keyboard.isDown(wgl.Input.Keys.Down)) sphere3.position[2] += mvamt
+		if (keyboard.isDown(wgl.Input.Keys.Left)) sphere3.position[0] -= mvamt
+		if (keyboard.isDown(wgl.Input.Keys.Right)) sphere3.position[0] += mvamt
 
-		// let newColor = [Math.pow(levels[0], 2), 0, 0]
-		// light2.setColor(newColor)
-		// sphere2.material.getAttribute('albedo').setValue(newColor)
+		if (SOUND_AFFECTS_LIGHT) {
+			let levels = analyser.getLevels()
+
+			let newColor = [Math.pow(levels[0], 2), 0.25, 0.5]
+			light2.setColor(newColor)
+			sphere2.material.getAttribute('albedo').setValue(newColor)
+		}
 
 		renderer.render(scene, camera)
 
