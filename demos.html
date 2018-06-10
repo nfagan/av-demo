@@ -9,6 +9,13 @@
             margin: 0;
             padding: 0;
         }
+        a {
+            text-decoration: none;
+            color: black;
+        }
+        a:hover {
+            color: rgb(11, 160, 165);
+        }
         .container {
             width: 100vw;
             height: 100vh;
@@ -30,10 +37,10 @@
 
         var links = [
             {href: 'anim', name: 'animation'},
-            {href: 'height', name: 'height map'},
-            {href: 'volume', name: 'volume'},
+            {href: 'height', name: 'terrain'},
+            {href: 'volume', name: 'light shafts'},
+            {href: 'controls', name: 'skybox'},
             {href: 'barebones', name: 'barebones'},
-            {href: 'controls', name: 'controls'},
         ]
 
         var cont = document.getElementsByClassName('container')[0]
