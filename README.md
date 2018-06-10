@@ -4,4 +4,4 @@ av-demo is an exploration of web gl + web audio, mainly for learning purposes. T
 
 The examples/ folder currently houses a couple of demos of basic a/v synchronization.
 
-One demo is currently online: [here](https://av-demo.herokuapp.com)
+A few demos are currently online: [here](https://av-demo.herokuapp.com/demos)
