@@ -1,32 +1,27 @@
 import * as wgl from '../gl/web-gl'
+import * as demo from './demo-util'
 
 export async function main() {
 
-	document.body.style.padding = '0'
-	document.body.style.margin = '0'
-	document.body.style.position = 'fixed'
+	const glInit = demo.init()
 
-	const keyboard = new wgl.Input.Keyboard()
-	const canvas = new wgl.Canvas()
-	const canvasElement = canvas.element
+	const gl = glInit.gl
+	const renderer = glInit.renderer
+	const canvas = glInit.canvas
+	const scene = glInit.scene
+	const camera = glInit.camera
+	const keyboard = glInit.keyboard
+	const keyboardMoveControls = glInit.keyboardMoveControls
+	const rotationControls = glInit.rotationControls
 
-	const gl: WebGLRenderingContext = canvasElement.getContext('webgl')
+	keyboardMoveControls.setSpeed(5.0)
 
-	if (!gl) 
-		throw new Error('Unable to initialize GL context.')
-
-	const scene = new wgl.Scene(gl)
-	const renderer = new wgl.renderers.functional(gl)
-	const camera = new wgl.Camera()
-	const keyboardMoveControls = new wgl.Controls.Movement.Keyboard(keyboard, camera, 5.0)
-	const mouseInput = new wgl.Input.PointerLock(canvas.element)
-	const rotationControls = new wgl.Controls.Orbit.Orbit2(mouseInput, camera)
-
-	const sphere = wgl.MeshFactory.create(gl, 'sphere')
-	const mat = wgl.Material.Physical(gl)
-	const sphereModel = new wgl.Model(gl, sphere, mat)
+	const sphereMesh = wgl.MeshFactory.create(gl, 'sphere')
+	const sphereMat = wgl.Material.Physical(gl)
+	const sphereModel = new wgl.Model(gl, sphereMesh, sphereMat)
+	const sphereTex = await wgl.Loaders.TEX.load2D(gl, '/tex/neb.png')
 	const light = wgl.Light.Point(gl)
-	const lightModel = new wgl.Model(gl, sphere, mat.clone())
+	const lightModel = new wgl.Model(gl, sphereMesh, sphereMat.clone())
 
 	renderer.setAspect(canvas.aspect)
 	renderer.setNearFar(0.1, 1000)
@@ -46,10 +41,33 @@ export async function main() {
 
 	camera.setPosition([0, 0, 5])
 
+	const spacePressed = () => keyboard.isDown(wgl.Input.Keys.space)
+	let isTex = false
+	let lastPress = Infinity
+	const pressTimeout = 0.3
+	const pressTimer = new wgl.util.time.DeltaTimer()
+
 	const animate = () => {
 
 		keyboardMoveControls.update()
 		rotationControls.update()
+		pressTimer.update()
+
+		lastPress += pressTimer.delta()
+
+		if (spacePressed() && lastPress > pressTimeout) {
+			const albedo = sphereMat.getAttribute('albedo')
+			if (isTex) {
+				albedo.setValue(sphereColor)
+			} else {
+				albedo.setValue(sphereTex)
+			}
+			//	reset sphere model program so that
+			//	the correct shader is chosen
+			sphereModel.program = null
+			isTex = !isTex
+			lastPress = 0
+		}
 
 		renderer.render(scene, camera)
 		window.requestAnimationFrame(animate)
